@@ -3,9 +3,9 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.thshsh</groupId>
-	<artifactId>sas-xport</artifactId>
+	<artifactId>sas-utils</artifactId>
 	<version>1.0.0</version>
-	<name>sas-xport</name>
+	<name>sas-utils</name>
 	<packaging>jar</packaging>
 	<developers>
 		<developer>
@@ -35,8 +35,8 @@
 		</repository>
 	</distributionManagement>
 	<scm>
-		<connection>scm:git:git://github.com/theshoeshiner/sas-xport.git</connection>
-		<url>https://github.com/theshoeshiner/sas-xport</url>
+		<connection>scm:git:git://github.com/theshoeshiner/sas-utils.git</connection>
+		<url>https://github.com/theshoeshiner/sas-utils</url>
 		<developerConnection>The Shoe Shiner</developerConnection>
 	</scm>
 	<build>
@@ -109,13 +109,14 @@
 		<dependency>
 			<groupId>org.thshsh</groupId>
 			<artifactId>struct</artifactId>
-			<version>1.0.0</version>
+			<version>2.0.0</version>
 		</dependency>
 		<dependency>
 			<groupId>commons-io</groupId>
 			<artifactId>commons-io</artifactId>
-			<version>2.6</version>
+			<version>2.11.0</version>
 		</dependency>
+		
 		<dependency>
 			<groupId>org.thshsh</groupId>
 			<artifactId>commons-lang</artifactId>
@@ -142,11 +143,6 @@
 			<version>1.15</version>
 		</dependency>
 		<dependency>
-			<groupId>org.thshsh</groupId>
-			<artifactId>tuples</artifactId>
-			<version>0.0.2</version>
-		</dependency>
-		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter</artifactId>
 			<version>5.7.0</version>
@@ -159,6 +155,6 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
-	<url>https://github.com/theshoeshiner/sas-xport</url>
-	<description>A library for working with SAS Xport files.</description>
+	<url>https://github.com/theshoeshiner/sas-utils</url>
+	<description>A library for working with SAS Files.</description>
 </project>

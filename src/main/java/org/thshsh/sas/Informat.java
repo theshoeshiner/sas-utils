@@ -1,5 +1,10 @@
 package org.thshsh.sas;
 
+/**
+ * Informats tell SAS how to READ the data
+ * @author daniel.watson
+ *
+ */
 public class Informat {
 
 	protected String name;

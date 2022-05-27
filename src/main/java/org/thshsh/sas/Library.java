@@ -3,64 +3,74 @@ package org.thshsh.sas;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import org.thshsh.sas.v56.Member;
-
 public abstract class Library {
 	
-	protected List<Member> members;
+
+	/*protected List<Dataset> datasets;
 	protected LocalDateTime created;
 	protected LocalDateTime modified;
 	protected String os;
-	protected String version;
+	protected String sasVersion;*/
 	
-	public Library(List<Member> members, LocalDateTime created, LocalDateTime modified, String os, String version) {
-		super();
-		this.members = members;
-		this.created = created;
-		this.modified = modified;
-		this.os = os;
-		this.version = version;
-	}
+	public Library() {}
+	
+	public abstract LocalDateTime getModified();
+	
+	public abstract LocalDateTime getCreated();
+	
+	public abstract List<? extends Dataset> getDatasets();
 
-	public List<Member> getMembers() {
-		return members;
-	}
+	public abstract void setDatasets(List<? extends Dataset> ds);
+	
+	/*	@SuppressWarnings("unchecked")
+		public Library(List<? extends Dataset> members, LocalDateTime created, LocalDateTime modified, String os, String version) {
+			super();
+			this.datasets = (List<Dataset>) members;
+			this.created = created;
+			this.modified = modified;
+			this.os = os;
+			this.sasVersion = version;
+		}*/
 
-	public void setMembers(List<Member> members) {
-		this.members = members;
+	/*public List<Dataset> getDatasets() {
+		return datasets;
 	}
-
+	
+	public void setDatasets(List<Dataset> members) {
+		this.datasets = members;
+	}
+	
 	public LocalDateTime getCreated() {
 		return created;
 	}
-
+	
 	public void setCreated(LocalDateTime created) {
 		this.created = created;
 	}
-
+	
 	public LocalDateTime getModified() {
 		return modified;
 	}
-
+	
 	public void setModified(LocalDateTime modified) {
 		this.modified = modified;
 	}
-
+	
 	public String getOs() {
 		return os;
 	}
-
+	
 	public void setOs(String os) {
 		this.os = os;
 	}
-
+	
 	public String getVersion() {
-		return version;
+		return sasVersion;
 	}
-
-	public void setVersion(String version) {
-		this.version = version;
-	}
+	
+	public void setSasVersion(String version) {
+		this.sasVersion = version;
+	}*/
 	
 	
 
