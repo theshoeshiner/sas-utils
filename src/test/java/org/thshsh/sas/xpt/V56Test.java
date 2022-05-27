@@ -1,4 +1,4 @@
-package org.thshsh.sas.v56;
+package org.thshsh.sas.xpt;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -47,7 +47,7 @@ public class V56Test {
 
 	public void testFile(File file) throws Exception, URISyntaxException {
 		
-		LibraryXpt library = LibraryXpt.from_file(file);
+		LibraryXpt library = LibraryXpt.fromFile(file);
 		
 		output(library, file);
 		
