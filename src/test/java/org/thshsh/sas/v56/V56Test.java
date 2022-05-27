@@ -19,6 +19,7 @@ import org.thshsh.sas.Dataset;
 import org.thshsh.sas.Library;
 import org.thshsh.sas.Variable;
 import org.thshsh.sas.bdat.LibraryBdat;
+import org.thshsh.sas.xpt.LibraryXpt;
 import org.thshsh.struct.Struct;
 
 public class V56Test {

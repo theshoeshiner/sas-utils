@@ -1,4 +1,4 @@
-package org.thshsh.sas.v56;
+package org.thshsh.sas.xpt;
 
 import org.thshsh.struct.StructEntity;
 import org.thshsh.struct.StructToken;
