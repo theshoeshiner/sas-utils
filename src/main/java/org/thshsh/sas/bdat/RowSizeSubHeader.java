@@ -1,7 +1,5 @@
 package org.thshsh.sas.bdat;
 
-import java.util.Arrays;
-
 import org.thshsh.struct.StructToken;
 
 public class RowSizeSubHeader extends SubHeader {

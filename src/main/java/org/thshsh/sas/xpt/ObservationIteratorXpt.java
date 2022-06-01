@@ -73,7 +73,6 @@ public class ObservationIteratorXpt implements Iterator<Observation> {
 			if(needToRead) {
 				int read = is.read(chunk);
 				if(read != stride) {
-					LOGGER.info("Only read {} bytes",read);
 					hasNext = false;
 				}
 				else {

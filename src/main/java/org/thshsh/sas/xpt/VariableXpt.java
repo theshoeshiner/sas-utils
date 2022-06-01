@@ -14,8 +14,9 @@ public class VariableXpt extends Variable {
 	@StructToken(order = 0)
 	Short variableTypeId;
 	
-	@StructToken(order = 1)
-	Short none;
+	//Always zero
+	@StructToken(order = 1) 
+	Short nameHash;
 	
 	@StructToken(order = 2)
 	Short length;
@@ -38,11 +39,8 @@ public class VariableXpt extends Variable {
 	@StructToken(order = 8)
 	Short formatDecimals;
 	
-	@StructToken(order = 9)
+	@StructToken(order = 9,suffix = 2) //2 character unused suffix
 	Short formatJustifyId;
-	
-	@StructToken(order = 10,length=2)
-	byte[] skip1;
 	
 	@StructToken(order = 11,length = 8)
 	String informatTypeString;
@@ -55,9 +53,7 @@ public class VariableXpt extends Variable {
 	
 	@StructToken(order = 14)
 	public Integer position;
-	
-	byte[] skip2;
-	
+
 	public VariableType getVariableType() {
 		return 	VariableType.values()[variableTypeId-1];
 	}
@@ -70,12 +66,12 @@ public class VariableXpt extends Variable {
 		this.variableTypeId = variableTypeId;
 	}
 
-	public Short getNone() {
-		return none;
+	public Short getNameHash() {
+		return nameHash;
 	}
 
-	public void setNone(Short none) {
-		this.none = none;
+	public void setNameHash(Short none) {
+		this.nameHash = none;
 	}
 
 	public Short getLength() {
@@ -142,13 +138,6 @@ public class VariableXpt extends Variable {
 		this.formatJustifyId = formatJustifyId;
 	}
 
-	public byte[] getSkip1() {
-		return skip1;
-	}
-
-	public void setSkip1(byte[] skip1) {
-		this.skip1 = skip1;
-	}
 
 	public String getInformatTypeString() {
 		return informatTypeString;
@@ -174,25 +163,15 @@ public class VariableXpt extends Variable {
 		this.imformatDecimals = imformatDecimals;
 	}
 
-	
-	
-	/*public Integer getPosition() {
+
+	public Integer getPosition() {
 		return position;
 	}
-	
+
 	public void setPosition(Integer position) {
 		this.position = position;
-	}*/
-
-	
-
-	public byte[] getSkip2() {
-		return skip2;
 	}
 
-	public void setSkip2(byte[] skip2) {
-		this.skip2 = skip2;
-	}
 
 	@Override
 	public String toString() {

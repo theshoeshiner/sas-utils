@@ -1,11 +1,10 @@
 package org.thshsh.sas;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
+
+import org.apache.commons.io.input.RandomAccessFileInputStream;
 
 public abstract class Dataset {
 
@@ -50,7 +49,7 @@ public abstract class Dataset {
 
 	public abstract void setVariables(List<? extends Variable> variables);
 	
-	public abstract Stream<Observation> streamObservations(InputStream cs) throws IOException;
+	public abstract Stream<Observation> streamObservations(RandomAccessFileInputStream stream) throws IOException;
 	
 	
 }

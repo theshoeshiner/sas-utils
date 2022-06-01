@@ -1,9 +1,5 @@
 package org.thshsh.sas.bdat;
 
-import java.util.List;
-
-import org.apache.commons.codec.binary.Hex;
-import org.thshsh.struct.Struct;
 import org.thshsh.struct.StructToken;
 
 public class FormatAndLabelSubHeader extends SubHeader {
@@ -30,10 +26,25 @@ public class FormatAndLabelSubHeader extends SubHeader {
 		String label = columnTextString.substring((short)objects.get(5),(short)objects.get(5)+(short) objects.get(6));
 	 */
 
-	@StructToken(order = -1,length = 8)
-	byte[] skip0;
+	//@StructToken(order = -5,length = 8)
+	//byte[] skip0;
 	
-	@StructToken(order = 0,length = 22)
+	//@StructToken(order = 0,length = 22)
+	//byte[] skip;
+	
+	@StructToken(order = -4,prefix = 8)
+	public Short formatDigits;
+	
+	@StructToken(order = -3)
+	public Short formatDecimals;
+	
+	@StructToken(order = -2)
+	public Short informatDigits;
+	
+	@StructToken(order = -1)
+	public Short informatDecimals;
+	
+	@StructToken(order = 0,length = 14)
 	byte[] skip;
 	
 	@StructToken(order=1)
@@ -54,15 +65,8 @@ public class FormatAndLabelSubHeader extends SubHeader {
 	@StructToken(order=6)
 	Short labelLength;
 
+	DatasetBdat dataset;
 	
-	
-	public byte[] getSkip0() {
-		return skip0;
-	}
-
-	public void setSkip0(byte[] skip0) {
-		this.skip0 = skip0;
-	}
 
 	public byte[] getSkip() {
 		return skip;
@@ -119,11 +123,27 @@ public class FormatAndLabelSubHeader extends SubHeader {
 	public void setLabelLength(Short labelLength) {
 		this.labelLength = labelLength;
 	}
+	
+	public String getFormat() {
+		return dataset.getSubHeaderString(formatStringIndex, formatStart, formatLength).orElse(null);
+	}
+	
+	public String getLabel() {
+		return dataset.getSubHeaderString(labelStringIndex, labelStart, labelLength).orElse(null);
+	}
 
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
-		builder.append("FormatAndLabelSubHeader [formatStringIndex=");
+		builder.append("FormatAndLabelSubHeader [formatDigits=");
+		builder.append(formatDigits);
+		builder.append(", formatDecimals=");
+		builder.append(formatDecimals);
+		builder.append(", informatDigits=");
+		builder.append(informatDigits);
+		builder.append(", informatDecimals=");
+		builder.append(informatDecimals);
+		builder.append(", formatStringIndex=");
 		builder.append(formatStringIndex);
 		builder.append(", formatStart=");
 		builder.append(formatStart);

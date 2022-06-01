@@ -114,6 +114,8 @@ public class LibraryBdat extends Library {
 	
 	List<String> columnNames = new ArrayList<String>();
 	
+	List<DatasetBdat> datasets = new ArrayList<DatasetBdat>();
+	
 	public static LibraryBdat from_file(File f) throws IOException, InstantiationException, IllegalAccessException {
 
 		RandomAccessFile raf = new RandomAccessFile(f, "r");
@@ -127,8 +129,11 @@ public class LibraryBdat extends Library {
 		RandomAccessFile raf = stream.getRandomAccessFile();
 		
 		DatasetBdat header = DatasetBdat.from_file(stream);
+		
+		LibraryBdat lib = new LibraryBdat();
+		lib.datasets.add(header);
 
-		return null;
+		return lib;
 
 	
 	}
@@ -161,8 +166,7 @@ public class LibraryBdat extends Library {
 
 	@Override
 	public List<? extends Dataset> getDatasets() {
-		// TODO Auto-generated method stub
-		return null;
+		return datasets;
 	}
 
 	@Override

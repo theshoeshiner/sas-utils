@@ -16,6 +16,8 @@ public class ColumnName {
 	@StructToken(order=3,length = 2)
 	byte[] skip;
 	
+	DatasetBdat dataset;
+	
 	public ColumnName() {}
 
 	public Short getIndex() {
@@ -48,6 +50,10 @@ public class ColumnName {
 
 	public void setSkip(byte[] skip) {
 		this.skip = skip;
+	}
+	
+	public String getName() {
+		return dataset.getSubHeaderString(index, start, length).get();
 	}
 
 	@Override

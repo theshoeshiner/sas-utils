@@ -1,6 +1,9 @@
 package org.thshsh.sas.bdat;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.nio.charset.Charset;
 import java.time.ZoneOffset;
@@ -10,7 +13,10 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
+import java.util.Spliterator;
+import java.util.Spliterators;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
@@ -19,13 +25,18 @@ import org.apache.commons.io.input.RandomAccessFileInputStream;
 import org.apache.commons.lang3.NotImplementedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.thshsh.sas.Dataset;
 import org.thshsh.sas.InvalidFormatException;
+import org.thshsh.sas.Observation;
 import org.thshsh.sas.Variable;
+import org.thshsh.sas.VariableType;
+import org.thshsh.sas.xpt.DatasetXpt;
+import org.thshsh.sas.xpt.ObservationIteratorXpt;
 import org.thshsh.struct.ByteOrder;
 import org.thshsh.struct.Struct;
 import org.thshsh.struct.TokenType;
 
-public class DatasetBdat {
+public class DatasetBdat extends Dataset {
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(DatasetBdat.class);
 	
@@ -109,7 +120,7 @@ public class DatasetBdat {
 	//List<Integer> columnDataLength = new ArrayList<Integer>();
 	//List<VariableType> columnDataType = new ArrayList<VariableType>();
 	
-	List<Variable> variables;
+	List<VariableBdat> variables;
 	List<Page> pages = new ArrayList<Page>();
 
 	//Integer rowCount;
@@ -120,6 +131,7 @@ public class DatasetBdat {
 	
 	RowSizeSubHeader rowSizeSubHeader;
 	ColumnNamesSubHeader columnNamesSubHeader;
+	ColumnAttributesSubHeader columnAttributesSubHeader;
 	
 	Boolean compression = false;
 	
@@ -141,26 +153,28 @@ public class DatasetBdat {
 		properties = new SasProperties();
 	}
 	
-	public Long getRowCount() {
+	public Long getObservationCount() {
 		return rowSizeSubHeader.getRowCount().longValue();
 	}
 	
-	public Long getColumnCount() {
+	public Long getVariableCount() {
 		return rowSizeSubHeader.getColumnCount().longValue();
 	}
 	
-	public void getVariables() {
+	public List<VariableBdat> getVariables() {
 		if(variables == null) {
+			variables = new ArrayList<VariableBdat>();
 			Iterator<FormatAndLabelSubHeader> fals = getFormatAndLabelSubHeaders().iterator();
 			Iterator<ColumnName> names = columnNamesSubHeader.getColumnNames().iterator();
+			Iterator<ColumnAttributes> atts = columnAttributesSubHeader.columnAttributes.iterator();
 			
-			long colCount = getColumnCount();
+			long colCount = getVariableCount();
 			for(int i=0;i<colCount;i++) {
-				FormatAndLabelSubHeader fal = fals.next();
-				ColumnName name = names.next();
-				
+				VariableBdat v = new VariableBdat(fals.next(), names.next(),atts.next());
+				variables.add(v);
 			}
 		}
+		return variables;
 	}
 	
 	public Stream<StringsSubHeader> getStringSubHeaders(){
@@ -187,8 +201,23 @@ public class DatasetBdat {
 			.map(p -> (FormatAndLabelSubHeader)p.getSubHeader());
 	}*/
 	
-	public Optional<String> getSubHeaderString(ColumnName sh) {
-		return getStringSubHeaders().skip(sh.index).map(h -> h.getSubString(sh.start, sh.length)).findFirst();
+	public Optional<String> getColumnName(ColumnName sh) {
+		return getSubHeaderString(sh.index, sh.start, sh.length);
+	}
+	
+	public Optional<String> getFormatName(FormatAndLabelSubHeader sh) {
+		if(sh.formatLength == 0) return Optional.empty();
+		return getSubHeaderString(sh.formatStringIndex, sh.formatStart, sh.formatLength);
+	}
+	
+	public Optional<String> getLabel(FormatAndLabelSubHeader sh) {
+		if(sh.labelLength == 0) return Optional.empty();
+		return getSubHeaderString(sh.labelStringIndex, sh.labelStart, sh.labelLength);
+	}
+	
+	public Optional<String> getSubHeaderString(int index, int start, int length) {
+		if(length == 0) return Optional.empty();
+		return getStringSubHeaders().skip(index).map(h -> h.getSubString(start, length)).findFirst();
 	}
 	
 	/*public Optional<String> getSubHeaderString(int index,int start, int length) {
@@ -269,6 +298,17 @@ public class DatasetBdat {
 	
 	public void setHeader3(Header3 h3) {
 		this.header3 = h3;
+	}
+	
+	/*public boolean hasObservations(Page page) {
+		return (page.getPageType() == PageType.Data && page.header.blockCount > 0)
+					|| (page.getPageType().mixed && rowSizeSubHeader.mixedPageRowCount.intValue() > 0);
+	}*/
+	
+	public Integer getObservationCount(Page page) {
+		if(page.getPageType() == PageType.Data) return page.getBlockCount();
+		//else if(page.getPageType() == PageType.Mixed1 || page.getPageType() == PageType.Mixed2) return rowSizeSubHeader.mixedPageRowCount.intValue();
+		else return 0;
 	}
 	
 	public static DatasetBdat from_file(RandomAccessFileInputStream stream) throws IOException, InstantiationException, IllegalAccessException {
@@ -412,6 +452,8 @@ public class DatasetBdat {
 										case FormatAndLabel:
 											processFormatAndLabelSubHeader(dataset, page, pointer, stream);
 											break;
+										case Data:
+											break;
 										/*case DATA_SUBHEADER_INDEX:
 											processDataSubHeader(dataset,page,subHeaderProps,stream);
 											break;*/
@@ -484,7 +526,7 @@ public class DatasetBdat {
 			//LOGGER.info("columnFormats: {}",dataset.columnFormats);
 			
 				
-			return null;
+			return dataset;
 
 		} finally {
 			//input.close();
@@ -731,6 +773,8 @@ public class DatasetBdat {
 		ColumnNamesSubHeader subHeader = new ColumnNamesSubHeader();
 		pointer.subHeader = subHeader;
 		
+		dataset.columnNamesSubHeader = subHeader;
+		
 		Struct<ColumnName> s = Struct.create(ColumnName.class);
 		
 		LOGGER.info("header length: {}",pointer.length);
@@ -745,6 +789,7 @@ public class DatasetBdat {
 		
 		for(int i=0;i<count;i++) {
 			ColumnName cns = s.unpackEntity(stream);
+			cns.dataset = dataset;
 			LOGGER.info("ColumnName: {}",cns);
 			subHeader.getColumnNames().add(cns);
 			//String name = dataset.getSubHeaderString(cns).orElse(null);
@@ -763,6 +808,7 @@ public class DatasetBdat {
 		LOGGER.info("processColumnAttributesSubHeader");
 		
 		ColumnAttributesSubHeader subHeader = new ColumnAttributesSubHeader();
+		dataset.columnAttributesSubHeader = subHeader;
 		pointer.subHeader = subHeader;
 		
 		Struct<? extends ColumnAttributes> s = Struct.create((Class<? extends ColumnAttributes>)(dataset.get64Bit()?ColumnAttributes64.class:ColumnAttributes32.class));
@@ -800,16 +846,21 @@ public class DatasetBdat {
 		
 		LOGGER.info("processFormatAndLabelSubHeader");
 		
-		//skip the first 2 integers
-		//IOUtils.skipFully(stream, dataset.getIntegerLength()*2);
-		
 		Struct<FormatAndLabelSubHeader> s =	Struct.create(FormatAndLabelSubHeader.class);
 		FormatAndLabelSubHeader fal = s.unpackEntity(stream);
+		fal.dataset = dataset;
 		
-		LOGGER.info("skip0: {}",Hex.encodeHexString(fal.getSkip0()));
-		LOGGER.info("skip1: {}",Hex.encodeHexString(fal.getSkip()));
-		
+		LOGGER.info("format: {}",fal.getFormat());
+		LOGGER.info("label: {}",fal.getLabel());
 		LOGGER.info("FormatAndLabelSubHeader: {}",fal);
+		
+	
+		LOGGER.info("skip1: {}",Hex.encodeHexString(fal.getSkip()));
+		if(!Hex.encodeHexString(fal.getSkip()).equals("0000000000000000000000000000")) {
+			//throw new IllegalStateException("wrong vals");
+		}
+		
+
 		
 		pointer.subHeader = fal;
 		
@@ -882,17 +933,20 @@ public class DatasetBdat {
 		}*/
 		
 		int rowCount = page.getBlockCount();
-		long colCount = dataset.getColumnCount();
+		long colCount = dataset.getVariableCount();
 		LOGGER.info("rowCount: {}",rowCount);
 		
-		for(int r=0;r<rowCount;r++) {
+		/*for(int r=0;r<rowCount;r++) {
 			
+			for(VariableBdat var : dataset.getVariables()) {
+				
+			}
 			for(int i=0;i<colCount;i++) {
 				
 				
 			}
 			
-		}
+		}*/
 		
 		/*	if(page.getPageType() == PageType.Mixed1 || page.getPageType() == PageType.Mixed2) {
 				//baseOffset += page.subHeaderCount * header.properties.
@@ -905,9 +959,9 @@ public class DatasetBdat {
 				}
 			}
 			*/
+		/*
 		
-		
-		/*LOGGER.info("page block count: {}",page.getBlockCount());
+		LOGGER.info("page block count: {}",page.getBlockCount());
 		LOGGER.info("baseOffset: {}",baseOffset);
 		
 		for(int r=0;r<rowCount;r++) {
@@ -989,8 +1043,8 @@ public class DatasetBdat {
 		
 		}
 		stream.getRandomAccessFile().seek(mark);
-		
 		*/
+		
 		
 		
 	}
@@ -1055,6 +1109,51 @@ public class DatasetBdat {
 		
 		
 	}
+
+	@Override
+	public String getName() {
+		return header1.getDatasetName();
+	}
+
+	@Override
+	public void setName(String name) {
+		header1.setDatasetName(name);
+	}
+
+	@Override
+	public String getLabel() {
+		return null;
+	}
+
+	@Override
+	public void setLabel(String label) {
+		
+	}
+
+	@Override
+	public String getType() {
+		return null;
+	}
+
+	@Override
+	public void setType(String type) {
+		
+	}
+
+	@Override
+	public void setVariables(List<? extends Variable> variables) {
+		this.variables = (List<VariableBdat>) variables;
+	}
+
+	public Stream<Observation> streamObservations(RandomAccessFileInputStream cs) throws IOException {
+		return streamObservations(this, cs);
+	}
+	
+	public static Stream<Observation> streamObservations(DatasetBdat member, RandomAccessFileInputStream file) throws FileNotFoundException {
+		Stream<Observation> stream= StreamSupport.stream(Spliterators.spliteratorUnknownSize(new ObservationIteratorBdat(member,file),Spliterator.NONNULL), false);
+		return stream;
+	}
+
 	
 	
 }

@@ -1,5 +1,6 @@
 package org.thshsh.sas.xpt;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -9,12 +10,17 @@ import java.util.Spliterators;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import org.apache.commons.io.input.RandomAccessFileInputStream;
 import org.thshsh.sas.Dataset;
 import org.thshsh.sas.Observation;
 import org.thshsh.sas.Variable;
 import org.thshsh.struct.StructEntity;
 import org.thshsh.struct.StructToken;
 
+/**
+ * This includes the MEMBER header and the NAMESTR header
+ *
+ */
 @StructEntity(charset = LibraryXpt.METADATA_CHARSET_NAME,trimAndPad = true)
 public class DatasetXpt extends Dataset {
 	
@@ -39,8 +45,8 @@ public class DatasetXpt extends Dataset {
 
 	public static final String HEADER_STRING = "                HEADER RECORD*******MEMBER  HEADER RECORD!!!!!!!000000000000000001600000000";
 	
-	@StructToken(order=0,length=75,prefix = 16)
-	public String header;
+	@StructToken(order=0,constant = HEADER_STRING)
+	protected String header;
 	
 	@StructToken(order=1,length=3,suffix = 90)
 	public String descriptorSizeString;
@@ -84,14 +90,14 @@ public class DatasetXpt extends Dataset {
 	}
 	
 	
-
-	public String getHeader() {
-		return header;
-	}
-
-	public void setHeader(String header) {
-		this.header = header;
-	}
+	/*
+		public String getHeader() {
+			return header;
+		}
+	
+		public void setHeader(String header) {
+			this.header = header;
+		}*/
 
 	public String getDescriptorSizeString() {
 		return descriptorSizeString;
@@ -173,7 +179,7 @@ public class DatasetXpt extends Dataset {
 		this.observationStartByte = observationStartByte;
 	}
 
-	public Stream<Observation> streamObservations(InputStream cs) throws IOException {
+	public Stream<Observation> streamObservations(RandomAccessFileInputStream cs) throws IOException {
 		return streamObservations(this, cs);
 	}
 	
@@ -186,9 +192,9 @@ public class DatasetXpt extends Dataset {
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
-		builder.append("DatasetXpt [header=");
-		builder.append(header);
-		builder.append(", descriptorSizeString=");
+		builder.append("DatasetXpt [");
+	
+		builder.append("descriptorSizeString=");
 		builder.append(descriptorSizeString);
 		builder.append(", name=");
 		builder.append(name);

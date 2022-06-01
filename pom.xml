@@ -116,7 +116,12 @@
 			<artifactId>commons-io</artifactId>
 			<version>2.11.0</version>
 		</dependency>
-		
+		<dependency>
+			<groupId>com.google.guava</groupId>
+			<version>15.0</version>
+			<artifactId>guava</artifactId>
+			<optional>true</optional>
+		</dependency>
 		<dependency>
 			<groupId>org.thshsh</groupId>
 			<artifactId>commons-lang</artifactId>

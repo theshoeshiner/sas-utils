@@ -39,7 +39,10 @@ public class Page {
 		this.subHeaderPointers = subHeaderPointers;
 	}
 	
-	
+	public Boolean hasObservations() {
+		return getPageType() == PageType.Data && header.blockCount > 0;
+	}
+
 
 	@Override
 	public String toString() {
