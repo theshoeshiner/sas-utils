@@ -1,5 +1,6 @@
-package org.thshsh.sas.bdat;
+package org.thshsh.sas.bdat.x64;
 
+import org.thshsh.sas.bdat.ColumnAttributes;
 import org.thshsh.struct.StructToken;
 
 public class ColumnAttributes64 extends ColumnAttributes {

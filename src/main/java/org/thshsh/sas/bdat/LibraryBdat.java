@@ -1,9 +1,5 @@
 package org.thshsh.sas.bdat;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.RandomAccessFile;
 import java.nio.charset.Charset;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -11,13 +7,10 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.codec.binary.Hex;
-import org.apache.commons.io.input.RandomAccessFileInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.thshsh.sas.Dataset;
 import org.thshsh.sas.Library;
-import org.thshsh.struct.Struct;
 
 /**
  * A Bdat "library" is actually just a folder containing sas7bdat files
@@ -27,7 +20,7 @@ import org.thshsh.struct.Struct;
  */
 public class LibraryBdat extends Library {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(LibraryBdat.class);
+	protected static final Logger LOGGER = LoggerFactory.getLogger(LibraryBdat.class);
 
 	/*
 	 SUBHEADER_SIGNATURE_TO_INDEX = {
@@ -116,42 +109,29 @@ public class LibraryBdat extends Library {
 	
 	List<DatasetBdat> datasets = new ArrayList<DatasetBdat>();
 	
-	public static LibraryBdat from_file(File f) throws IOException, InstantiationException, IllegalAccessException {
-
+	/*public static LibraryBdat from_file(File f) throws IOException, InstantiationException, IllegalAccessException {
+	
 		RandomAccessFile raf = new RandomAccessFile(f, "r");
 		RandomAccessFileInputStream stream = new RandomAccessFileInputStream(raf);
-
+	
 		return from_file(stream);
 	}
-
+	
 	public static LibraryBdat from_file(RandomAccessFileInputStream stream) throws IOException, InstantiationException, IllegalAccessException {
-
+	
 		RandomAccessFile raf = stream.getRandomAccessFile();
 		
 		DatasetBdat header = DatasetBdat.from_file(stream);
 		
 		LibraryBdat lib = new LibraryBdat();
 		lib.datasets.add(header);
-
+	
 		return lib;
+	
+	
+	}*/
 
 	
-	}
-
-	public static List<Object> seekAndRead(RandomAccessFileInputStream raf, long pos, Struct s) throws IOException {
-		long mark = raf.getRandomAccessFile().getFilePointer();
-		raf.getRandomAccessFile().seek(pos);
-		List<Object> objects = s.unpack(raf);
-		raf.getRandomAccessFile().seek(mark);
-		return objects;
-	}
-
-	public static void debugBuffer(InputStream is) throws IOException {
-		byte[] print = new byte[64];
-		is.read(print);
-		LOGGER.debug("BUFFER: {}", Hex.encodeHexString(print));
-	}
-
 	@Override
 	public LocalDateTime getModified() {
 		// TODO Auto-generated method stub

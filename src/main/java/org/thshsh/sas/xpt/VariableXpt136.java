@@ -1,5 +1,6 @@
 package org.thshsh.sas.xpt;
 
+import org.apache.commons.lang3.NotImplementedException;
 import org.thshsh.struct.StructEntity;
 
 /**
@@ -7,11 +8,14 @@ import org.thshsh.struct.StructEntity;
  * @author daniel.watson
  *
  */
-@StructEntity(trimAndPad = true,charset = LibraryXpt.METADATA_CHARSET_NAME,suffix = 48)
+@StructEntity(trimAndPad = true,charset = LibraryXpt.METADATA_CHARSET_NAME)
+//TODO need to change the suffix to 48 bytes
 public class VariableXpt136 extends VariableXpt {
 	
 
-
+	public VariableXpt136() {
+		throw new NotImplementedException();
+	}
 	
 	
 }

@@ -1,6 +1,5 @@
 package org.thshsh.sas.xpt;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -16,6 +15,9 @@ import org.thshsh.sas.Observation;
 import org.thshsh.sas.Variable;
 import org.thshsh.struct.StructEntity;
 import org.thshsh.struct.StructToken;
+import org.thshsh.struct.StructTokenPrefix;
+import org.thshsh.struct.StructTokenSuffix;
+import org.thshsh.struct.TokenType;
 
 /**
  * This includes the MEMBER header and the NAMESTR header
@@ -23,56 +25,51 @@ import org.thshsh.struct.StructToken;
  */
 @StructEntity(charset = LibraryXpt.METADATA_CHARSET_NAME,trimAndPad = true)
 public class DatasetXpt extends Dataset {
-	
-	/*
-	 public static Pattern pattern = Pattern.compile(
-	        //# Header line 1
-	        "HEADER RECORD\\*{7}MEMBER  HEADER RECORD\\!{7}0{17}160{8}(?<descriptorsize>140|136)  HEADER RECORD\\*{7}DSCRPTR HEADER RECORD\\!{7}0{30} {2}"
-	        //# Header line 3
-	        +"SAS {5}(?<name>.{8})SASDATA (?<version>.{8})(?<os>.{8}) {24}(?<created>.{16})"
-	        //# Header line 4
-	        +"(?<modified>.{16}) {16}"
-	        +"(?<label>.{40})(?<type>    DATA|    VIEW| {8})"
-	        //# Namestrs
-	        +"HEADER RECORD\\*{7}NAMESTR HEADER RECORD\\!{7}0{6}"
-	        +"(?<nvariables>.{4})0{20} {2}"
-	        +"(?<namestrs>.*?)"
-	        +"HEADER RECORD\\*{7}OBS {5}HEADER RECORD\\!{7}0{30} {2}",
-	       // # Observations ... until EOF or another Member.
-	        Pattern.DOTALL
-	    );
-	 */
 
-	public static final String HEADER_STRING = "                HEADER RECORD*******MEMBER  HEADER RECORD!!!!!!!000000000000000001600000000";
+	public static final String DATASET_HEADER_STRING = "HEADER RECORD*******MEMBER  HEADER RECORD!!!!!!!000000000000000001600000000";
 	
-	@StructToken(order=0,constant = HEADER_STRING)
-	protected String header;
+	public static final String DESCRIPTOR_HEADER_STRING = "HEADER RECORD*******DSCRPTR HEADER RECORD!!!!!!!000000000000000000000000000000  SAS     ";
 	
-	@StructToken(order=1,length=3,suffix = 90)
+	public static final String VARIABLES_HEADER_STRING = "HEADER RECORD*******NAMESTR HEADER RECORD!!!!!!!000000";
+	
+	private static final String VARIABLES_FOOTER = "00000000000000000000  ";
+
+	@StructTokenPrefix({@StructToken(type=TokenType.String,constant = DATASET_HEADER_STRING)})
+	@StructToken(order=1,length=3)
+	@StructTokenSuffix({@StructToken(type=TokenType.String,constant = "  ")})
 	public String descriptorSizeString;
 	
-	@StructToken(order=2,length=8,suffix = 8)
+	@StructTokenPrefix({@StructToken(type=TokenType.String,constant = DESCRIPTOR_HEADER_STRING)})
+	@StructToken(order=3,length=8)
 	public String name;
 	
-	@StructToken(order=3,length=8)
+	@StructToken(order=4,constant = "SASDATA ")
+	public String sasType;
+	
+	@StructToken(order=5,length=8)
 	public String version;
 	
-	@StructToken(order=4,length=8,suffix = 24)
+	@StructToken(order=6,length=8)
+	@StructTokenSuffix({@StructToken(type = TokenType.String,constant =XptConstants.SPACES_24)})
 	public String os;
 	
-	@StructToken(order=5,length=16)
+	@StructToken(order=7,length=16)
 	public String createdString;
 	
-	@StructToken(order=6,length=16,suffix = 16)
+	@StructToken(order=8,length=16)
+	@StructTokenSuffix({@StructToken(type = TokenType.String,constant = XptConstants.SPACES_16)})
 	public String modifiedString;
 	
-	@StructToken(order=7,length=40)
+	@StructToken(order=9,length=40)
 	public String label;
 	
-	@StructToken(order=8,length=8,suffix = 54)
+	@StructToken(order=10,length=8)
 	public String type;
+
 	
-	@StructToken(order=9,length=4,suffix = 22)
+	@StructTokenPrefix({@StructToken(type=TokenType.String,constant = VARIABLES_HEADER_STRING)})
+	@StructToken(order=12,length=4)
+	@StructTokenSuffix({@StructToken(type = TokenType.String,constant = VARIABLES_FOOTER)})
 	public String variableCount;
 	
 	protected List<VariableXpt> variables;
@@ -84,20 +81,11 @@ public class DatasetXpt extends Dataset {
 		return variables;
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
 	public void setVariables(List<? extends Variable> variables) {
 		this.variables = (List<VariableXpt>) variables;
 	}
-	
-	
-	/*
-		public String getHeader() {
-			return header;
-		}
-	
-		public void setHeader(String header) {
-			this.header = header;
-		}*/
 
 	public String getDescriptorSizeString() {
 		return descriptorSizeString;

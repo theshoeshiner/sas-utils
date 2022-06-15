@@ -8,16 +8,18 @@ import org.slf4j.LoggerFactory;
  * @author daniel.watson
  *
  */
-public class Format {
+public abstract class Format {
 	
-	private static final Logger LOGGER = LoggerFactory.getLogger(Format.class);
+	protected static final Logger LOGGER = LoggerFactory.getLogger(Format.class);
 	
-	protected FormatType type;
+	/*protected FormatType type;
 	protected Integer length;
 	protected Integer decimals;
-	protected Justify justify;
+	protected Justify justify;*/
 	
-	public Format(FormatType type, Integer length, Integer decimals, Justify justify) {
+	public abstract FormatType getType();
+	
+	/*public Format(FormatType type, Integer length, Integer decimals, Justify justify) {
 		super();
 		this.type = type;
 		this.length = length;
@@ -25,7 +27,7 @@ public class Format {
 		this.justify = justify;
 		LOGGER.info("new format: {} , {} , {} , {}",type,length,decimals,justify);
 	}
-
+	
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
@@ -39,7 +41,7 @@ public class Format {
 		builder.append(justify);
 		builder.append("]");
 		return builder.toString();
-	}
+	}*/
 
 	
 	

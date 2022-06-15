@@ -1,14 +1,21 @@
 package org.thshsh.sas.bdat;
 
+import org.thshsh.struct.Struct;
 import org.thshsh.struct.StructEntity;
 import org.thshsh.struct.StructToken;
+import org.thshsh.struct.StructTokenPrefix;
+import org.thshsh.struct.StructTokenSuffix;
+import org.thshsh.struct.TokenType;
 
 @StructEntity(trimAndPad=true)
 public class Header3 {
-
-	@StructToken(order = 1,length = 8)
-	public String skip;
 	
+	public static final Struct<Header3> STRUCT = Struct.create(Header3.class);
+
+	/*@StructToken(order = 1,length = 8)
+	public String skip;*/
+	
+	@StructTokenPrefix({@StructToken(type = TokenType.Bytes,constant = "0000000000000000",validate = false)})
 	@StructToken(order = 2,length = 8)
 	public String sasRelease;
 	
@@ -22,19 +29,25 @@ public class Header3 {
 	public String osVendor;
 	
 	@StructToken(order = 6,length = 16)
+	@StructTokenSuffix({
+			@StructToken(type = TokenType.Bytes,constant = "0000000000000000000000000000000000000000000000000000000000000000",validate = false),
+			@StructToken(type = TokenType.Bytes,constant = "00000000",validate = false) //TODO int, page sequence signature? (value is close to the value at start of each Page	Offset Table)
+	})
 	public String osName;
 	
 	
+	@StructToken(order = 7)
+	public Double timestamp;
 
-	public String getSkip() {
+	/*public String getSkip() {
 		return skip;
 	}
-
-
-
+	
+	
+	
 	public void setSkip(String skip) {
 		this.skip = skip;
-	}
+	}*/
 
 
 
@@ -101,9 +114,7 @@ public class Header3 {
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
-		builder.append("[skip=");
-		builder.append(skip);
-		builder.append(", sasRelease=");
+		builder.append("Header3 [sasRelease=");
 		builder.append(sasRelease);
 		builder.append(", sasServer=");
 		builder.append(sasServer);
@@ -113,6 +124,8 @@ public class Header3 {
 		builder.append(osVendor);
 		builder.append(", osName=");
 		builder.append(osName);
+		builder.append(", timestamp=");
+		builder.append(timestamp);
 		builder.append("]");
 		return builder.toString();
 	}

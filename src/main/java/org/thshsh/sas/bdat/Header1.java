@@ -1,37 +1,49 @@
 package org.thshsh.sas.bdat;
 
+import org.thshsh.struct.Struct;
 import org.thshsh.struct.StructEntity;
 import org.thshsh.struct.StructToken;
+import org.thshsh.struct.StructTokenPrefix;
+import org.thshsh.struct.StructTokenSuffix;
+import org.thshsh.struct.TokenType;
 
 @StructEntity(trimAndPad = true)
 public class Header1 {
 	
-	@StructToken(order=0,length = 32)
-	public byte[] magic;
-	
+	public static final Struct<Header1> STRUCT = Struct.create(Header1.class);
+
 	@StructToken(order=1)
+	@StructTokenPrefix({@StructToken(type = TokenType.Bytes,constant = "000000000000000000000000c2ea8160b31411cfbd92080009c7318c181f1011")})
+	@StructTokenSuffix({@StructToken(type = TokenType.Bytes,constant = "0000",validate = false)})
 	public Byte align1;
 	
-	@StructToken(order=2, length = 2)
-	public byte[] skip1;
-	
+
 	@StructToken(order=3)
+	@StructTokenSuffix({@StructToken(type = TokenType.Bytes,constant = "00",validate = false)})
 	public Byte align2;
 	
-	@StructToken(order=4)
-	public Byte skip2;
-	
+
 	@StructToken(order=5)
+	@StructTokenSuffix({@StructToken(type = TokenType.Bytes,constant = "00",validate = false)})
 	public Boolean littleEndian;
 	
-	@StructToken(order=6)
-	public Byte skip3;
-	
+
 	@StructToken(order=7,length = 1)
+	@StructTokenSuffix({
+		@StructToken(type = TokenType.Bytes,constant = "0000000000000000",validate = false),
+		@StructToken(type = TokenType.Bytes,constant = "0000000000000000",validate = false),
+		@StructToken(type = TokenType.Bytes,constant = "0000000000000000",validate = false), //supposedly a repeat of first 8 bytes
+		@StructToken(type = TokenType.Bytes,constant = "000000000000",validate = false)
+		})
 	public String platform;
 	
-	@StructToken(order=8,length = 52)
-	public byte[] skip4;
+
+	@StructToken(order = 8)
+	@StructTokenSuffix({
+		@StructToken(type = TokenType.Bytes,constant = "000000000000000000000000",validate = false),
+		@StructToken(type = TokenType.String,constant = "SAS FILE")
+	})
+	public Short encoding;
 	
 	@StructToken(order=9,length = 64)
 	public String datasetName;
@@ -41,14 +53,6 @@ public class Header1 {
 	
 	
 
-	public byte[] getMagic() {
-		return magic;
-	}
-
-	public void setMagic(byte[] magic) {
-		this.magic = magic;
-	}
-
 	public Byte getAlign1() {
 		return align1;
 	}
@@ -57,13 +61,6 @@ public class Header1 {
 		this.align1 = align1;
 	}
 
-	public byte[] getSkip1() {
-		return skip1;
-	}
-
-	public void setSkip1(byte[] skip1) {
-		this.skip1 = skip1;
-	}
 
 	public Byte getAlign2() {
 		return align2;
@@ -71,14 +68,6 @@ public class Header1 {
 
 	public void setAlign2(Byte align2) {
 		this.align2 = align2;
-	}
-
-	public Byte getSkip2() {
-		return skip2;
-	}
-
-	public void setSkip2(Byte skip2) {
-		this.skip2 = skip2;
 	}
 
 	public Boolean getLittleEndian() {
@@ -89,14 +78,6 @@ public class Header1 {
 		this.littleEndian = littleEndian;
 	}
 
-	public Byte getSkip3() {
-		return skip3;
-	}
-
-	public void setSkip3(Byte skip3) {
-		this.skip3 = skip3;
-	}
-
 	public String getPlatform() {
 		return platform;
 	}
@@ -105,13 +86,6 @@ public class Header1 {
 		this.platform = platform;
 	}
 
-	public byte[] getSkip4() {
-		return skip4;
-	}
-
-	public void setSkip4(byte[] skip4) {
-		this.skip4 = skip4;
-	}
 
 	public String getDatasetName() {
 		return datasetName;
@@ -134,25 +108,16 @@ public class Header1 {
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
-		builder.append("Header1 [magic=");
-		//builder.append(Arrays.toString(magic));
-		builder.append(magic);
-		builder.append(", align1=");
+		builder.append("Header1 [align1=");
 		builder.append(align1);
-		builder.append(", skip1=");
-		builder.append(skip1);
 		builder.append(", align2=");
 		builder.append(align2);
-		builder.append(", skip2=");
-		builder.append(skip2);
 		builder.append(", littleEndian=");
 		builder.append(littleEndian);
-		builder.append(", skip3=");
-		builder.append(skip3);
 		builder.append(", platform=");
 		builder.append(platform);
-		builder.append(", skip4=");
-		builder.append(skip4);
+		builder.append(", encoding=");
+		builder.append(encoding);
 		builder.append(", datasetName=");
 		builder.append(datasetName);
 		builder.append(", fileType=");

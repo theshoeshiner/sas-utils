@@ -1,5 +1,6 @@
 package org.thshsh.sas.bdat;
 
+import org.thshsh.sas.Format;
 import org.thshsh.sas.Variable;
 import org.thshsh.sas.VariableType;
 
@@ -22,7 +23,7 @@ public class VariableBdat extends Variable {
 	}
 
 	public Integer getLength() {
-		return attributes.getLength().intValue();
+		return attributes.width.intValue();
 	}
 	
 	public VariableType getType() {
@@ -40,6 +41,12 @@ public class VariableBdat extends Variable {
 		builder.append(attributes);
 		builder.append("]");
 		return builder.toString();
+	}
+
+	@Override
+	public Format getFormat() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 	
 	

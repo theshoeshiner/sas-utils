@@ -9,19 +9,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.apache.commons.codec.DecoderException;
-import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.io.input.RandomAccessFileInputStream;
-import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.thshsh.sas.Dataset;
 import org.thshsh.sas.Library;
 import org.thshsh.sas.Variable;
-import org.thshsh.struct.Struct;
 
 public class XptTest {
 
@@ -47,57 +44,87 @@ public class XptTest {
 		catch (URISyntaxException e) {}
 	}
 	
-	@Test
-	public void testMetadata() throws IOException {
+	/*@Test
+	public void testAllMetadata() throws IOException {
 		for(File file : files) {
 			LOGGER.info("File: {}",file);
 			LibraryXpt lib = getLibrary(file);
 		}
 	}
-
+	*/
 	@Test
 	public void testTwoTables() throws Exception, URISyntaxException {
-		File file = new File(XptTest.class.getResource("twotables.xpt").toURI());
-		testFile(file);
+		LibraryXpt library = getLibrary(twoTables);
+		Assertions.assertEquals(2, library.getDatasets().size());
+		Assertions.assertEquals(2, library.getDatasets().get(0).getVariables().size());
+		Assertions.assertEquals(5, library.getDatasets().get(1).getVariables().size());
+		Assertions.assertEquals(library.getDatasets().get(0).streamObservations(twoTables).count(),144);
+		Assertions.assertEquals(library.getDatasets().get(1).streamObservations(twoTables).count(),19);
+		libraryToCsv(library, twoTables);
 	}
 	
 	@Test
-	@Disabled
+	public void testSmall() throws Exception, URISyntaxException {
+		LibraryXpt library = getLibrary(small);
+		Assertions.assertEquals(1, library.getDatasets().size());
+		Assertions.assertEquals(5, library.getDatasets().get(0).getVariables().size());		
+		Assertions.assertEquals(library.getDatasets().get(0).streamObservations(small).count(),7557);
+		libraryToCsv(library, small);
+	}
+	
+	@Test
+	public void testNumeric() throws Exception, URISyntaxException {
+		LibraryXpt library = getLibrary(numeric);
+		Assertions.assertEquals(1, library.getDatasets().size());
+		Assertions.assertEquals(17, library.getDatasets().get(0).getVariables().size());
+		Assertions.assertEquals(library.getDatasets().get(0).streamObservations(numeric).count(),10109);
+		libraryToCsv(library, numeric);
+	}
+	
+	@Test
 	public void testLargeXpt() throws Exception, URISyntaxException {
-		File file = new File(XptTest.class.getResource("large.xpt").toURI());
-		testFile(file);
+		LibraryXpt library = getLibrary(large);
+		Assertions.assertEquals(1, library.getDatasets().size());
+		Assertions.assertEquals(193, library.getDatasets().get(0).getVariables().size());
 	}
 	
-	@Test
+	/*@Test
 	public void testBasicXpt() throws Exception, URISyntaxException {
 		File file = new File(XptTest.class.getResource("test.xpt").toURI());
 		testFile(file);
-	}
+	}*/
 	
-	@Test
+	/*@Test
 	public void testAcqXpt() throws Exception, URISyntaxException {
 		File file = new File(XptTest.class.getResource("acq_f.xpt").toURI());
 		testFile(file);
-	}
+	}*/
 
 	public static LibraryXpt getLibrary(File file) throws IOException {
-		LibraryXpt library = LibraryXpt.fromFile(file);
+		LibraryXpt library = ParserXpt.parserLibrary(file);
 		return library;
 	}
 	
-	public static void testFile(File file) throws Exception, URISyntaxException {
-		
-		LibraryXpt library = getLibrary(file);
-		libraryToCsv(library, file);
+	public static LibraryXpt testLibraryToCsv(File file) throws Exception, URISyntaxException {
+		try {
+			LibraryXpt library = getLibrary(file);
+			libraryToCsv(library, file);
+			return library;
+		}
+		catch(Exception e) {
+			LOGGER.error("",e);
+			throw e;
+		}
 		
 	}
 	
 	
 	public static void libraryToCsv(Library library, File file) throws IOException {
 		
-		RandomAccessFileInputStream stream = new RandomAccessFileInputStream(new RandomAccessFile(file, "r"));
-		
+
 		for(Dataset m : library.getDatasets()) {
+			
+			RandomAccessFileInputStream stream = new RandomAccessFileInputStream(new RandomAccessFile(file, "r"));
 			
 			//FileInputStream fis = new FileInputStream(file);
 			//Member m = library.getMembers().get(0);
@@ -120,7 +147,7 @@ public class XptTest {
 		    
 		    m.streamObservations(stream).forEach(obs -> {
 		    	try {
-					printer.printRecord(obs.getValues().values());
+					printer.printRecord(obs.getFormattedValues());
 					
 				} catch (IOException e) {
 					throw new IllegalStateException(e);
@@ -134,7 +161,7 @@ public class XptTest {
 		
 	}
 	
-	@Test
+	/*@Test
 	public void byteTest() throws DecoderException {
 		
 		String[] ids = new String[] {
@@ -167,7 +194,7 @@ public class XptTest {
 			Struct s2 = Struct.create("<q");
 			LOGGER.info("s2 packed: {}",Hex.encodeHexString(s2.pack(i.longValue())));
 		}
-	}
+	}*/
 	
 	
 	

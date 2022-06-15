@@ -1,12 +1,8 @@
 package org.thshsh.sas.bdat;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.List;
-import java.util.stream.Stream;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.RandomAccessFileInputStream;
@@ -14,8 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.thshsh.sas.Observation;
 import org.thshsh.sas.VariableType;
-import org.thshsh.sas.xpt.ObservationIteratorXpt;
-import org.thshsh.sas.xpt.VariableXpt;
 import org.thshsh.struct.ByteOrder;
 import org.thshsh.struct.Struct;
 import org.thshsh.struct.TokenType;

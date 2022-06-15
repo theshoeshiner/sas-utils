@@ -23,6 +23,12 @@ public abstract class Variable {
 
 	public abstract String getName();
 	
+	
+	public abstract VariableType getType();
+	
+	
+	public abstract Format getFormat();
+	
 	/*public Variable(VariableType type, Integer length, Integer number, String name, String label, Format format,Format informat,
 			Integer position) {
 		super();

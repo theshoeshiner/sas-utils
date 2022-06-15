@@ -1,6 +1,9 @@
 package org.thshsh.sas.bdat;
 
 import org.thshsh.struct.StructToken;
+import org.thshsh.struct.StructTokenPrefix;
+import org.thshsh.struct.StructTokenSuffix;
+import org.thshsh.struct.TokenType;
 
 public class FormatAndLabelSubHeader extends SubHeader {
 	
@@ -32,7 +35,8 @@ public class FormatAndLabelSubHeader extends SubHeader {
 	//@StructToken(order = 0,length = 22)
 	//byte[] skip;
 	
-	@StructToken(order = -4,prefix = 8)
+	@StructTokenPrefix({@StructToken(type=TokenType.Bytes,constant = "0000000000000000")})
+	@StructToken(order = -4)
 	public Short formatDigits;
 	
 	@StructToken(order = -3)
@@ -42,54 +46,52 @@ public class FormatAndLabelSubHeader extends SubHeader {
 	public Short informatDigits;
 	
 	@StructToken(order = -1)
+	@StructTokenSuffix({
+		@StructToken(type=TokenType.Bytes,constant = "0000000000000000000000000000",validate = false)
+	})
 	public Short informatDecimals;
 	
-	@StructToken(order = 0,length = 14)
-	byte[] skip;
+	/*@StructToken(order = 0,length = 14)
+	byte[] unknown;*/
 	
 	@StructToken(order=1)
-	Short formatStringIndex;
+	public Short formatIndex;
 	
 	@StructToken(order=2)
-	Short formatStart;
+	public Short formatOffset;
 	
 	@StructToken(order=3)
-	Short formatLength;
+	public Short formatLength;
 	
 	@StructToken(order=4)
-	Short labelStringIndex;
+	public Short labelIndex;
 	
 	@StructToken(order=5)
-	Short labelStart;
+	public Short labelOffset;
 	
 	@StructToken(order=6)
-	Short labelLength;
+	@StructTokenSuffix({
+		@StructToken(type=TokenType.Bytes,constant = "000000000000")
+	})
+	public Short labelLength;
 
 	DatasetBdat dataset;
 	
 
-	public byte[] getSkip() {
-		return skip;
+	public Short getFormatIndex() {
+		return formatIndex;
 	}
 
-	public void setSkip(byte[] skip) {
-		this.skip = skip;
+	public void setFormatIndex(Short formatStringIndex) {
+		this.formatIndex = formatStringIndex;
 	}
 
-	public Short getFormatStringIndex() {
-		return formatStringIndex;
+	public Short getFormatOffset() {
+		return formatOffset;
 	}
 
-	public void setFormatStringIndex(Short formatStringIndex) {
-		this.formatStringIndex = formatStringIndex;
-	}
-
-	public Short getFormatStart() {
-		return formatStart;
-	}
-
-	public void setFormatStart(Short formatStart) {
-		this.formatStart = formatStart;
+	public void setFormatOffset(Short formatStart) {
+		this.formatOffset = formatStart;
 	}
 
 	public Short getFormatLength() {
@@ -100,20 +102,20 @@ public class FormatAndLabelSubHeader extends SubHeader {
 		this.formatLength = formatLength;
 	}
 
-	public Short getLabelStringIndex() {
-		return labelStringIndex;
+	public Short getLabelIndex() {
+		return labelIndex;
 	}
 
-	public void setLabelStringIndex(Short labelStringIndex) {
-		this.labelStringIndex = labelStringIndex;
+	public void setLabelIndex(Short labelStringIndex) {
+		this.labelIndex = labelStringIndex;
 	}
 
-	public Short getLabelStart() {
-		return labelStart;
+	public Short getLabelOffset() {
+		return labelOffset;
 	}
 
-	public void setLabelStart(Short labelStart) {
-		this.labelStart = labelStart;
+	public void setLabelOffset(Short labelStart) {
+		this.labelOffset = labelStart;
 	}
 
 	public Short getLabelLength() {
@@ -125,17 +127,17 @@ public class FormatAndLabelSubHeader extends SubHeader {
 	}
 	
 	public String getFormat() {
-		return dataset.getSubHeaderString(formatStringIndex, formatStart, formatLength).orElse(null);
+		return dataset.getSubHeaderString(formatIndex, formatOffset, formatLength).orElse(null);
 	}
 	
 	public String getLabel() {
-		return dataset.getSubHeaderString(labelStringIndex, labelStart, labelLength).orElse(null);
+		return dataset.getSubHeaderString(labelIndex, labelOffset, labelLength).orElse(null);
 	}
 
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
-		builder.append("FormatAndLabelSubHeader [formatDigits=");
+		builder.append("[formatDigits=");
 		builder.append(formatDigits);
 		builder.append(", formatDecimals=");
 		builder.append(formatDecimals);
@@ -143,16 +145,16 @@ public class FormatAndLabelSubHeader extends SubHeader {
 		builder.append(informatDigits);
 		builder.append(", informatDecimals=");
 		builder.append(informatDecimals);
-		builder.append(", formatStringIndex=");
-		builder.append(formatStringIndex);
-		builder.append(", formatStart=");
-		builder.append(formatStart);
+		builder.append(", formatIndex=");
+		builder.append(formatIndex);
+		builder.append(", formatOffset=");
+		builder.append(formatOffset);
 		builder.append(", formatLength=");
 		builder.append(formatLength);
-		builder.append(", labelStringIndex=");
-		builder.append(labelStringIndex);
-		builder.append(", labelStart=");
-		builder.append(labelStart);
+		builder.append(", labelIndex=");
+		builder.append(labelIndex);
+		builder.append(", labelOffset=");
+		builder.append(labelOffset);
 		builder.append(", labelLength=");
 		builder.append(labelLength);
 		builder.append("]");

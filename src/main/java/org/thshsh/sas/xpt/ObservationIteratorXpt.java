@@ -3,6 +3,7 @@ package org.thshsh.sas.xpt;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.time.LocalTime;
 import java.util.Iterator;
 import java.util.List;
 
@@ -11,6 +12,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.thshsh.sas.Observation;
+import org.thshsh.sas.SasConstants;
 import org.thshsh.sas.VariableType;
 import org.thshsh.struct.Struct;
 
@@ -29,35 +31,37 @@ public class ObservationIteratorXpt implements Iterator<Observation> {
 	public static final Struct<?> IBM = Struct.create(">Q");
 	public static final char[] SPECIAL = "ABCDEFGHIJKLMNOPQRSTUVWXYZ_".toCharArray();
 	
-	int stride = 0;
-	byte[] chunk;
-	InputStream is;
-	DatasetXpt member;
-	Struct<?> struct;
-	Boolean hasNext = null;
-	Boolean needToRead = true;
+	protected int observationSize = 0;
+	protected byte[] buffer;
+	protected InputStream input;
+	protected DatasetXpt member;
+	protected Struct<?> struct;
+	
+	protected Boolean hasNext = null;
+	protected Boolean needToRead = true;
 	
 	public ObservationIteratorXpt(DatasetXpt m,InputStream in)  {
 		
 		this.member = m;
-		this.is = in;
+		this.input = in;
+		
 		StringBuilder formatString = new StringBuilder();
 		
 		for(VariableXpt var : member.getVariables()) {
-			stride+= var.getLength();
+			observationSize+= var.getLength();
 			formatString.append(var.getLength());
-			formatString.append(var.getVariableType() == VariableType.Numeric?"s":"S");
+			formatString.append(var.getType() == VariableType.Numeric?"s":"S");
 		}
 
 		struct = Struct.create(formatString.toString(),Charset.forName(CHARSET));
 		
 		try {
-			IOUtils.skip(is, member.getObservationStartByte());
+			IOUtils.skip(input, member.getObservationStartByte());
 		} 
 		catch (IOException e) {
 			throw new IllegalArgumentException(e);
 		}
-		chunk = new byte[stride];
+		buffer = new byte[observationSize];
 		
 	}
 	
@@ -71,13 +75,13 @@ public class ObservationIteratorXpt implements Iterator<Observation> {
 	protected void readIfNecessary() {
 		try {
 			if(needToRead) {
-				int read = is.read(chunk);
-				if(read != stride) {
+				int read = IOUtils.read(input, buffer);
+				if(read != observationSize) {
 					hasNext = false;
 				}
 				else {
 					hasNext = false;
-					for(byte b : chunk) {
+					for(byte b : buffer) {
 						if(b != SENTINEL) {
 							hasNext = true;
 							break;
@@ -98,7 +102,7 @@ public class ObservationIteratorXpt implements Iterator<Observation> {
 		readIfNecessary();
 		needToRead = true;
 		
-		List<Object> tokens = struct.unpack(chunk);
+		List<Object> tokens = struct.unpack(buffer);
 		
 		if(tokens.size() != member.getVariables().size()) throw new IllegalStateException("Token Count: "+tokens.size()+" Not Equal to Header Count: "+member.getVariables().size());
 
@@ -107,7 +111,9 @@ public class ObservationIteratorXpt implements Iterator<Observation> {
 		for(int i=0;i<member.getVariables().size();i++) {
 			VariableXpt vm = this.member.getVariables().get(i);
 			Object val = tokens.get(i);
-			if(vm.getVariableType() == VariableType.Numeric) val = ObservationIteratorXpt.ibm_to_ieee((byte[]) val);
+			if(vm.getType() == VariableType.Numeric) {
+				val = ObservationIteratorXpt.ibm_to_ieee((byte[]) val);
+			}
 			ob.putValue(vm, val);
 		}
 		
@@ -124,10 +130,10 @@ public class ObservationIteratorXpt implements Iterator<Observation> {
 		List<Object> tokens = IBM.unpack(padded);
 		Long val = (Long) tokens.get(0);
 		long sign = val & 0x8000000000000000l;
-		long exp = (val & 0x7f00000000000000l) >> 56;
-		long man = (val & 0x00ffffffffffffffl);
+		long exponent = (val & 0x7f00000000000000l) >> 56;
+		long mantissa = (val & 0x00ffffffffffffffl);
 	
-		if(man == 0) {
+		if(mantissa == 0) {
 			if(bytes[0] == 0x00) return 0d;
 			else if(bytes[0] == 0x80) return -0d;
 			else if(bytes[0] == NO_VALUE) return null;
@@ -145,12 +151,12 @@ public class ObservationIteratorXpt implements Iterator<Observation> {
 		else if( (val & 0x0020000000000000l) > 0) shift = 1;
 	    else shift = 0;
 		
-		man = man >> shift;
-		man = man & 0xffefffffffffffffl;
-		exp -= 65;
-		exp <<= 2;
-		exp += shift + 1023;
-		long ieee = sign | (exp << 52) | man;
+		mantissa = mantissa >> shift;
+		mantissa = mantissa & 0xffefffffffffffffl;
+		exponent -= 65;
+		exponent <<= 2;
+		exponent += shift + 1023;
+		long ieee = sign | (exponent << 52) | mantissa;
 		
 				
 		return Double.longBitsToDouble(ieee);

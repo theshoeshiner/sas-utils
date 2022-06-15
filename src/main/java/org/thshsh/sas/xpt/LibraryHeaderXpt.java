@@ -2,36 +2,35 @@ package org.thshsh.sas.xpt;
 
 import org.thshsh.struct.StructEntity;
 import org.thshsh.struct.StructToken;
+import org.thshsh.struct.StructTokenPrefix;
+import org.thshsh.struct.StructTokenSuffix;
+import org.thshsh.struct.TokenType;
 
 @StructEntity(charset = LibraryXpt.METADATA_CHARSET_NAME,trimAndPad = true)
-public class LibraryXptHeader {
+public class LibraryHeaderXpt {
 
-	/*
-	 static Pattern HEADER_PATTERN = Pattern.compile(
-			"(HEADER RECORD\\*{7}LIBRARY HEADER RECORD\\!{7}0{30} {2}SAS {5}SAS {5}SASLIB {2}(?<version>.{8})(?<os>.{8}) {24}(?<created>.{16})(?<modified>.{16}) {64})"
-			,Pattern.DOTALL);
-	 */
+
+	public static final String HEADER = XptConstants.HEADER_TAG+"LIBRARY HEADER RECORD!!!!!!!000000000000000000000000000000  SAS     SAS     SASLIB  ";
 	
-	@StructToken(order=0,length=104)
-	public String magic;
-	
+	@StructTokenPrefix({@StructToken(type=TokenType.String,constant = HEADER)})
 	@StructToken(order=1,length=8)
 	public String version;
 	
-	@StructToken(order=2,length=8,suffix = 24)
+	@StructToken(order=2,length=8)
+	@StructTokenSuffix({@StructToken(type = TokenType.String,constant = XptConstants.SPACES_24)})
 	public String os;
 	
 	@StructToken(order=3,length=16)
 	public String createdString;
 	
-	@StructToken(order=4,length=16,suffix = 48)
+	@StructToken(order=4,length=16)
 	public String modifiedString;
 
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
 		builder.append("Header [magic=");
-		builder.append(magic);
+
 		builder.append(", version=");
 		builder.append(version);
 		builder.append(", os=");

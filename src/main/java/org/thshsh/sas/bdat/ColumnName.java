@@ -1,20 +1,24 @@
 package org.thshsh.sas.bdat;
 
+import org.thshsh.struct.Struct;
 import org.thshsh.struct.StructToken;
+import org.thshsh.struct.StructTokenSuffix;
+import org.thshsh.struct.TokenType;
 
 public class ColumnName {
 	
+	public static final Struct<ColumnName> STRUCT = Struct.create(ColumnName.class);
+	
 	@StructToken(order=0)
-	Short index;
+	public Short index;
 	
 	@StructToken(order=1)
-	Short start;
+	public Short start;
 	
 	@StructToken(order=2)
-	Short length;
+	@StructTokenSuffix({@StructToken(type = TokenType.Bytes,constant = "0000")})
+	public Short length;
 	
-	@StructToken(order=3,length = 2)
-	byte[] skip;
 	
 	DatasetBdat dataset;
 	
@@ -44,13 +48,13 @@ public class ColumnName {
 		this.length = length;
 	}
 
-	public byte[] getSkip() {
-		return skip;
-	}
-
-	public void setSkip(byte[] skip) {
-		this.skip = skip;
-	}
+	/*	public byte[] getSkip() {
+			return skip;
+		}
+	
+		public void setSkip(byte[] skip) {
+			this.skip = skip;
+		}*/
 	
 	public String getName() {
 		return dataset.getSubHeaderString(index, start, length).get();
@@ -59,7 +63,7 @@ public class ColumnName {
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
-		builder.append("ColumnNameSubHeader [index=");
+		builder.append("ColumnName [index=");
 		builder.append(index);
 		builder.append(", start=");
 		builder.append(start);

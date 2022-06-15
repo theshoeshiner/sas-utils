@@ -2,9 +2,13 @@ package org.thshsh.sas.xpt;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.thshsh.sas.Format;
+import org.thshsh.sas.FormatType;
 import org.thshsh.sas.Variable;
 import org.thshsh.sas.VariableType;
 import org.thshsh.struct.StructToken;
+import org.thshsh.struct.StructTokenSuffix;
+import org.thshsh.struct.TokenType;
 
 public class VariableXpt extends Variable {
 
@@ -12,50 +16,56 @@ public class VariableXpt extends Variable {
 
 	
 	@StructToken(order = 0)
-	Short variableTypeId;
+	public Short variableTypeId;
 	
 	//Always zero
 	@StructToken(order = 1) 
-	Short nameHash;
+	public Short nameHash;
 	
 	@StructToken(order = 2)
-	Short length;
+	public Short length;
 	
 	@StructToken(order = 3)
-	Short number;
+	public Short number;
 	
 	@StructToken(order = 4, length = 8)
-	String name;
+	public String name;
 	
 	@StructToken(order = 5,length = 40)
-	String label;
+	public String label;
 
 	@StructToken(order = 6,length = 8)
-	String formatTypeString;
+	public String formatTypeString;
 	
 	@StructToken(order = 7)
-	Short formatLength;
+	public Short formatLength;
 	
 	@StructToken(order = 8)
-	Short formatDecimals;
+	public Short formatDecimals;
 	
-	@StructToken(order = 9,suffix = 2) //2 character unused suffix
-	Short formatJustifyId;
+	@StructToken(order = 9)
+	@StructTokenSuffix({@StructToken(type = TokenType.Bytes,constant = "0000")}) //2 empty byte suffix
+	public Short formatJustifyId;
 	
 	@StructToken(order = 11,length = 8)
-	String informatTypeString;
+	public String informatTypeString;
 	
 	@StructToken(order = 12)
-	Short informatLength;
+	public Short informatLength;
 	
 	@StructToken(order = 13)
-	Short imformatDecimals;
+	public Short imformatDecimals;
 	
 	@StructToken(order = 14)
+	@StructTokenSuffix({@StructToken(type = TokenType.Bytes,constant = "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000")})
 	public Integer position;
 
-	public VariableType getVariableType() {
+	public VariableType getType() {
 		return 	VariableType.values()[variableTypeId-1];
+	}
+	
+	public Format getFormat() {
+		return new FormatXpt();
 	}
 
 	public Short getVariableTypeId() {
@@ -201,64 +211,21 @@ public class VariableXpt extends Variable {
 		builder.append(", position=");
 		builder.append(position);
 		builder.append(", getVariableType()=");
-		builder.append(getVariableType());
+		builder.append(getType());
 		builder.append("]");
 		return builder.toString();
 	}
-	
-	/*public static Map<Integer, Struct> FORMATS = MapUtils.createHashMap(140, Struct.create(
-							   ">hhhH8S40S8Shhh2s8Shhl52s", LibraryV56.METADATA_CHARSET),
-			136, Struct.create(">hhhH8S40S8Shhh2s8shhl48s", LibraryV56.METADATA_CHARSET));
-	
-	public static Variable fromBytes(byte[] bts) throws IOException {
-	
-		//Struct sm = FORMATS.get(140);
-		//LOGGER.info("sm: {}",sm.byteCount());
-		
-		
-		Struct.unpack(TokenType.Bytes, ByteOrder.Big, bts);
-		
-		LOGGER.info("bytes: {}",Hex.encodeHexString(bts));
-		
-		//Struct<Variable140> s = Struct.create(Variable140.class).byteOrder(ByteOrder.Big);		
-		//Variable140 var = s.unpackEntity(bts);
-		//LOGGER.info("Variable140: {}",var);
-		
-		return null;
-		
-		
-		LOGGER.info("length: {}",bts.length);
-		List<Object> tokens = FORMATS.get(bts.length).unpack(bts);
-		
-		Format format = null;
-		String formatName = tokens.get(6).toString().trim();
-		if(StringUtils.isNotBlank(formatName)) {
-			format = new Format(
-					FormatType.fromString(tokens.get(6).toString().trim()),
-					((Short)tokens.get(7)).intValue(),
-					((Short)tokens.get(8)).intValue(),
-					Justify.values()[((Short)tokens.get(9)).intValue()]
-					);
+
+	public class FormatXpt extends Format {
+
+		@Override
+		public FormatType getType() {
+			if(formatTypeString == null) return null;
+			return FormatType.fromString(formatTypeString);
 		}
 		
-		LOGGER.info("index: {}",tokens.get(3).getClass());
-		LOGGER.info("index: {}",tokens.get(3));
 		
-		return new Variable(
-				VariableType.values()[(int)((short)tokens.get(0))-1],
-				((Short)tokens.get(2)).intValue(),
-				((Integer)tokens.get(3)).intValue(),
-				tokens.get(4).toString().trim(),
-				tokens.get(5).toString().trim(),
-				format,
-				new Informat(
-						tokens.get(11).toString().trim(), 
-						((Short)tokens.get(12)).intValue(), 
-						((Short)tokens.get(13)).intValue()),
-				null,
-				
-				((Integer)tokens.get(14)).intValue()
-				);
+		
 	}
-	*/
+
 }
