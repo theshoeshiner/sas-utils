@@ -14,10 +14,10 @@ LibraryXpt library = ParserXpt.parseLibrary(file);
 //Or For SAS7BDAT use
 LibraryBdat library = ParserBdat.parseLibrary(file);
 
-//iterate data sets
+//iterate data sets (sas7bdat will only ever have 1)
 for(Dataset dataset : library.getDatasets()) {
 
-  //iterate variables if necessary..
+  //iterate variables if necessary...
   dataset.getVariables();
 
   //stream observations by passing the file reference...
