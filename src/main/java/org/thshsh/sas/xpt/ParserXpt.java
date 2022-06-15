@@ -12,7 +12,7 @@ import org.thshsh.struct.Struct;
 
 public class ParserXpt {
 
-	public static LibraryXpt parserLibrary(File f) throws IOException {
+	public static LibraryXpt parseLibrary(File f) throws IOException {
 		return ParserXpt.parseLibrary(new RandomAccessFileInputStream(new RandomAccessFile(f, "r")));
 	}
 

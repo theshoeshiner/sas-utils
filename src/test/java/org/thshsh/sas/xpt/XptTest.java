@@ -101,7 +101,7 @@ public class XptTest {
 	}*/
 
 	public static LibraryXpt getLibrary(File file) throws IOException {
-		LibraryXpt library = ParserXpt.parserLibrary(file);
+		LibraryXpt library = ParserXpt.parseLibrary(file);
 		return library;
 	}
 	
@@ -126,11 +126,8 @@ public class XptTest {
 			
 			RandomAccessFileInputStream stream = new RandomAccessFileInputStream(new RandomAccessFile(file, "r"));
 			
-			//FileInputStream fis = new FileInputStream(file);
-			//Member m = library.getMembers().get(0);
 			LOGGER.info("member: {}",m);
-			//m.loadObservations(fis);
-			
+	
 			File outFile = new File("./target/"+file.getName()+"-"+m.getName()+"-out.csv");
 			
 			CSVFormat.Builder b = CSVFormat.Builder.create();
@@ -160,44 +157,6 @@ public class XptTest {
 		}
 		
 	}
-	
-	/*@Test
-	public void byteTest() throws DecoderException {
-		
-		String[] ids = new String[] {
-				"f7f7f7f7",
-				"f6f6f6f6",
-				"00fcffff",
-				"fdffffff",
-				"ffffffff",
-				"fcffffff",
-				//"fffffffc",
-				"fefbffff",
-				"feffffff"
-				
-		};
-		
-		for(String ss : ids) {
-		
-			LOGGER.info("HEX: {}",ss);
-			byte[] ar = Hex.decodeHex(ss);
-			LOGGER.info("bytes: {}",new Object[] {ar});
-			Struct s = Struct.create("<i");
-			Number i = (Number) s.unpack(ar).get(0);
-			LOGGER.info("unpacked: {}",i);
-			
-			//Integer p = i.intValue();
-			//byte[] packed = s.pack(p);
-			//Struct s2 = Struct.create("<I");
-			//LOGGER.info("packed: {}",Hex.encodeHexString(packed));
-			
-			Struct s2 = Struct.create("<q");
-			LOGGER.info("s2 packed: {}",Hex.encodeHexString(s2.pack(i.longValue())));
-		}
-	}*/
-	
-	
-	
 	
 	
 }

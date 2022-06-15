@@ -3,7 +3,6 @@ package org.thshsh.sas.xpt;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
-import java.time.LocalTime;
 import java.util.Iterator;
 import java.util.List;
 
@@ -12,7 +11,6 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.thshsh.sas.Observation;
-import org.thshsh.sas.SasConstants;
 import org.thshsh.sas.VariableType;
 import org.thshsh.struct.Struct;
 
