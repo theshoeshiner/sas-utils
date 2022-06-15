@@ -122,17 +122,17 @@ public class XptTest {
 	public static void libraryToCsv(Library library, File file) throws IOException {
 		
 
-		for(Dataset m : library.getDatasets()) {
+		for(Dataset dataset : library.getDatasets()) {
 			
-			RandomAccessFileInputStream stream = new RandomAccessFileInputStream(new RandomAccessFile(file, "r"));
+			//RandomAccessFileInputStream stream = new RandomAccessFileInputStream(new RandomAccessFile(file, "r"));
 			
-			LOGGER.info("member: {}",m);
+			LOGGER.info("member: {}",dataset);
 	
-			File outFile = new File("./target/"+file.getName()+"-"+m.getName()+"-out.csv");
+			File outFile = new File("./target/"+file.getName()+"-"+dataset.getName()+"-out.csv");
 			
 			CSVFormat.Builder b = CSVFormat.Builder.create();
 			b.setHeader(
-					m.getVariables()
+					dataset.getVariables()
 					.stream()
 					.map(Variable::getName)
 					.collect(Collectors.toList())
@@ -142,7 +142,7 @@ public class XptTest {
 			
 		    CSVPrinter printer = def.print(outFile, Charset.defaultCharset());
 		    
-		    m.streamObservations(stream).forEach(obs -> {
+		    dataset.streamObservations(file).forEach(obs -> {
 		    	try {
 					printer.printRecord(obs.getFormattedValues());
 					
