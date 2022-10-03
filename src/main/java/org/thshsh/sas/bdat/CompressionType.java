@@ -2,9 +2,9 @@ package org.thshsh.sas.bdat;
 
 public enum CompressionType {
 
-	None(0),Truncated(1),RLE(4);
+	None(0),Truncated(1),Compressed(4);
 	int id;
-	boolean meta;
+	//boolean meta;
 	private CompressionType(int id) {
 		this.id = id;
 	}

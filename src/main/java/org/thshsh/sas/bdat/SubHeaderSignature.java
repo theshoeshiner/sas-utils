@@ -1,8 +1,17 @@
 package org.thshsh.sas.bdat;
 
+import java.util.Objects;
+
 public enum SubHeaderSignature {
-	RowSize(-134744073), ColumnSize(-151587082), SubHeaderCount(-1024), String(-3), ColumnName(-1), ColumnAttributes(-4), FormatAndLabel(-1026),
-	ColumnList(-2), Data(null);
+	RowSize(0xF7F7F7F7), 
+	ColumnSize(0xF6F6F6F6), 
+	SubHeaderCount(0xFFFFFC00), 
+	String(0xFFFFFFFD), 
+	ColumnName(0xFFFFFFFF), 
+	ColumnAttributes(0xFFFFFFFC), 
+	FormatAndLabel(0xFFFFFBFE),
+	ColumnList(0xFFFFFFFE),
+	Data(null);
 
 	Integer id;
 
@@ -12,8 +21,7 @@ public enum SubHeaderSignature {
 
 	public static SubHeaderSignature fromId(Integer id) {
 		for (SubHeaderSignature s : values()) {
-			if (id.equals(s.id))
-				return s;
+			if (Objects.equals(id, s.id)) return s;
 		}
 		return null;
 	}

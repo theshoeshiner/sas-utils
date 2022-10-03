@@ -5,11 +5,13 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.Comparator;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.RandomAccessFileInputStream;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.function.Failable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.thshsh.struct.Struct;
@@ -20,15 +22,17 @@ public class ParserBdat {
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(ParserBdat.class);
 
-	public static LibraryBdat parseLibrary(File f) throws IOException, InstantiationException, IllegalAccessException {
+	public static LibraryBdat parseLibrary(File f) throws IOException {
 
+		LOGGER.info("parseLibrary: {}",f);
+		
 		RandomAccessFile raf = new RandomAccessFile(f, "r");
 		RandomAccessFileInputStream stream = new RandomAccessFileInputStream(raf);
 
 		return parseLibrary(stream);
 	}
 
-		public static LibraryBdat parseLibrary(RandomAccessFileInputStream stream) throws IOException, InstantiationException, IllegalAccessException {
+		public static LibraryBdat parseLibrary(RandomAccessFileInputStream stream) throws IOException {
 	
 			//RandomAccessFile raf = stream.getRandomAccessFile();
 			
@@ -42,7 +46,7 @@ public class ParserBdat {
 		
 		}
 	
-	public static DatasetBdat parseDataset(RandomAccessFileInputStream stream) throws IOException, InstantiationException, IllegalAccessException {
+	public static DatasetBdat parseDataset(RandomAccessFileInputStream stream) throws IOException {
 
 		try {
 
@@ -53,14 +57,15 @@ public class ParserBdat {
 			//byte[] buffer;
 
 			dataset.setHeader1(Header1.STRUCT.unpackEntity(stream));
+			LOGGER.info("Header1: {}", dataset.header1);
 			//if(!Arrays.equals(MAGIC, dataset.header1.magic)) throw new InvalidFormatException("Invalid Header for SAS7BDAT format");
 
-			IOUtils.skip(stream, dataset.getHeader1Padding());
+			IOUtils.skip(stream, dataset.header1.getHeader1Padding());
 
 			dataset.setHeader2(Header2.STRUCT.unpackEntity(stream));
 			LOGGER.info("Header2: {}", dataset.header2);
 
-			IOUtils.skip(stream, dataset.getHeader2Padding());
+			IOUtils.skip(stream, dataset.header1.getHeader2Padding());
 
 			Header3 h3 = Header3.STRUCT.unpackEntity(stream);
 			LOGGER.info("h3: {}", h3);
@@ -79,7 +84,7 @@ public class ParserBdat {
 				long mark = raf.getFilePointer();
 				LOGGER.info("page: {}", p);
 
-				Page page = new Page();
+				Page page = new Page(dataset);
 				page.startByte = raf.getFilePointer();
 				dataset.getPages().add(page);
 				LOGGER.info("page start: {}", page.startByte);
@@ -92,131 +97,129 @@ public class ParserBdat {
 				//python process_page_meta
 				{
 
-					//python read_page_header
-					{
+					
+					PageHeader pageHeader = PageHeader.STRUCT.unpackEntity(stream);
+					page.setHeader(pageHeader);
 
-						//IOUtils.skip(stream, dataset.getPageOffset());
-
-						PageHeader pageHeader = PageHeader.STRUCT.unpackEntity(stream);
-						page.setHeader(pageHeader);
-
-						LOGGER.info("PageHeader: {}", pageHeader);
-
-					}
-
+					LOGGER.info("PageHeader: {}", pageHeader);
 					LOGGER.info("Page: {}", page);
 
 					if (page.getPageType().meta) {
-						
-						
+												
 						if(page.getSubHeaderCount()>0) {
 						
-							LOGGER.info("process {} sub header pointers",page.getSubHeaderCount());
+							LOGGER.info("reading {} page sub header pointers",page.getSubHeaderCount());
 	
 							for (int i = 0; i < page.getSubHeaderCount(); i++) {
 							
+								
 								page.getSubHeaderPointers().add(processSubHeaderPointer(dataset, stream));
+								
 							
 							}
 						
 						}
-						else {
-							LOGGER.info("Processing missing sub header pointers");
+						//else {
+							//LOGGER.info("Processing missing sub header pointers");
 							/*
 							for (int i = 0; i < 10; i++) {
 								
 								page.getSubHeaderPointers().add(processSubHeaderPointer(dataset, stream));
 							
 							}*/
-						}
+						//}
 						
 
 						LOGGER.info("current position: {}", raf.getFilePointer());
+						
+						LOGGER.info("page.startByte: {}", page.startByte);
 
-						//processSubHeaders(stream, dataset, raf, page);
+						
 
 						//process subheaderpointers
-						for (SubHeaderPointer pointer : page.getSubHeaderPointers()) {
+					for (SubHeaderPointer pointer : page.getSubHeaderPointers()) {
 
-							LOGGER.info("POINTER: {}", pointer);
+							long seekTo = page.startByte + pointer.getPageOffset().longValue(); 
+						
+							LOGGER.info("position: {} seekTo: {} length:",raf.getFilePointer(),seekTo,pointer.getLength()+seekTo);
 							
-
-							raf.seek(page.startByte + pointer.getOffset().longValue());
+							raf.seek(seekTo);
 							
-							LOGGER.info("position: {} length: {} to: {}", raf.getFilePointer(),pointer.getLength(),pointer.getLength()+raf.getFilePointer());
-							//LOGGER.info("length: {}", pointer.getLength());
-							//LOGGER.info("to: {}", pointer.getLength()+raf.getFilePointer());
+							//LOGGER.info("position: {} length: {} to: {}", raf.getFilePointer(),pointer.getLength(),pointer.getLength()+raf.getFilePointer());
 
-							//unpack signature
-							Number signature = (Number) Struct.unpack(dataset.getIntegerTokenType(), stream);
-							SubHeaderSignature index = SubHeaderSignature.fromId(signature.intValue());
-
-							LOGGER.info("Signature: {}", index);
-
-							//LOGGER.info("position: {}", raf.getFilePointer());
+							//unpack signature first so we can select the correct struct to unpack
+							Number signature = (Number) Struct.unpack(dataset.header1.getIntegerTokenType(), stream);
+							SubHeaderSignature type = SubHeaderSignature.fromId(signature.intValue());
+							if(
+									type == null
+									&& dataset.getCompressed()
+									&& (pointer.getCompressionType() == CompressionType.Compressed || pointer.getCompressionType() == CompressionType.None)
+									&& pointer.getCategory() == SubHeaderCategory.B
+							) {
+								//There are data sub headers in compressed files
+								type = SubHeaderSignature.Data;
+							}
 							
-							/*if(dataset.compression != null && index == null 
-									&& (pointer.compressionTypeId ==  SubHeaderPointer.COMPRESSED_SUBHEADER_ID || pointer.compressionTypeId  == 0)
-									&& pointer.typeId == SubHeaderPointer.COMPRESSED_SUBHEADER_TYPE
-									) {
-								index = SubHeaderSignature.Data;
-							}*/
-							//subHeaderProps.index = index;
-							pointer.setSignature(index);
+							pointer.setSignature(type);
+							
+							LOGGER.info("Processing subheader pointer: {}",pointer);
 
-							if (pointer.getSignature() != null) {
-
+							if(pointer.getCompressionType() == CompressionType.Truncated) {
+								LOGGER.info("Skipping Truncated SubHeader pointer: {}",pointer);
+							}
+							else {
+								
+								LOGGER.info("Signature: {} = {}", signature,type);
+	
+								if(type == null) throw new NotImplementedException("SubHeader with type "+signature+" is unknown");
+								
+								
+	
+								LOGGER.info("POINTER: {}", pointer);
+	
 								if (pointer.getSignature() != SubHeaderSignature.Data) {
 
 									//NOTE these methods MUST NOT alter the file stream position
 									switch (pointer.getSignature()) {
-									case ColumnAttributes:
-										processColumnAttributesSubHeader(dataset, page, pointer, stream);
-										break;
-									case ColumnName:
-										processColumnNameSubHeader(dataset, page, pointer, stream);
-										break;
-									case String:
-										processTextSubHeader(dataset, page, pointer, stream);
-										break;
-									case ColumnSize:
-										processColumnCountSubHeader(dataset, page, pointer, stream);
-										break;
-									case RowSize:
-										processRowSizeSubHeader(dataset, page, pointer, stream);
-										break;
-									case FormatAndLabel:
-										processFormatAndLabelSubHeader(dataset, page, pointer, stream);
-										break;
-									case Data:
-										break;
-									/*case DATA_SUBHEADER_INDEX:
-										processDataSubHeader(dataset,page,subHeaderProps,stream);
-										break;*/
-									//NOOPS
-									case SubHeaderCount:
-										break;
-									case ColumnList:
-										break;
-									default:
-										break;
-
+										case ColumnAttributes:
+											processColumnAttributesSubHeader(dataset, page, pointer, stream);
+											break;
+										case ColumnName:
+											processColumnNameSubHeader(dataset, page, pointer, stream);
+											break;
+										case String:
+											processTextSubHeader(dataset, page, pointer, stream);
+											break;
+										case ColumnSize:
+											processColumnCountSubHeader(dataset, page, pointer, stream);
+											break;
+										case RowSize:
+											processRowSizeSubHeader(dataset, page, pointer, stream);
+											break;
+										case FormatAndLabel:
+											processFormatAndLabelSubHeader(dataset, page, pointer, stream);
+											break;
+										case SubHeaderCount:
+											break;
+										case ColumnList:
+											break;
+										default:
+											break;
 									}
 
-									/*if(subHeader.index.subHeaderClass!=null) {
-										SubHeader sh = subHeader.index.subHeaderClass.newInstance();
-										sh.process(header,page, subHeader, stream);
-									}*/
-
 								} else {
-
+									LOGGER.info("Skipping data subheader");
 								}
+							
 							}
 
 							//LOGGER.info("index: {}",index);
 
 						}
+						//));
 
+						LOGGER.info("done with headers");
+						
 					}
 
 					//python readlines
@@ -225,11 +228,11 @@ public class ParserBdat {
 					//TODO handle mixed type page
 					//TODO skip data pages unless we are iterating observations
 
-					if (page.getPageType() == PageType.Data || page.getPageType() == PageType.Mixed1 || page.getPageType() == PageType.Mixed2) {
+					//if (page.getPageType() == PageType.Data || page.getPageType() == PageType.Mixed1 || page.getPageType() == PageType.Mixed2) {
 
 						//processDataSubHeader(dataset, page, null, stream);
 
-					}
+					//}
 					/*if(page.pageType == PageType.Mixed1 || page.pageType == PageType.Mixed2) {
 						
 					}*/
@@ -246,7 +249,15 @@ public class ParserBdat {
 				}
 
 			}
+			
+			LOGGER.info("dataset strings: comp: {} soft: {} proc: {}",dataset.getCompression(),dataset.getCreatorSoftware(),dataset.getCreatorProcess());
 
+			
+			//
+			if (dataset.columnSizeSubHeader.numColumns.intValue() != dataset.rowSizeSubHeader.getColumnCount()) {
+				throw new IllegalArgumentException("Column Count Mismatch");
+			}
+			
 			//LOGGER.info("columnNames: {}",dataset.columnNames);
 			//LOGGER.info("columnLabels: {}",dataset.columnLabels);
 			//LOGGER.info("columnFormats: {}",dataset.columnFormats);
@@ -403,7 +414,6 @@ public class ParserBdat {
 		//python process_subheader_pointers
 		{
 
-
 			subHeaderPointer = SubHeaderPointer.STRUCT.unpackEntity(stream);
 			LOGGER.info("subHeader: {}", subHeaderPointer);
 
@@ -416,6 +426,8 @@ public class ParserBdat {
 	protected static void processRowSizeSubHeader(DatasetBdat dataset, Page page, SubHeaderPointer pointer, RandomAccessFileInputStream stream)throws IOException {
 
 		RowSizeSubHeader rowSize = RowSizeSubHeader.STRUCT.unpackEntity(stream);
+		
+		//Struct<RowSizeSubHeader2> rs = RowSizeSubHeader2.STRUCT;
 
 		LOGGER.info("rowSize: {}", rowSize);
 
@@ -424,70 +436,90 @@ public class ParserBdat {
 
 	}
 
-	protected static void processColumnCountSubHeader(DatasetBdat header, Page page, SubHeaderPointer pointer, RandomAccessFileInputStream stream)throws IOException {
+	protected static void processColumnCountSubHeader(DatasetBdat dataset, Page page, SubHeaderPointer pointer, RandomAccessFileInputStream stream)throws IOException {
 		
 		ColumnSizeSubHeader subheader = Struct.create(ColumnSizeSubHeader.class).unpackEntity(stream);
+		dataset.columnSizeSubHeader = subheader;
 
 		LOGGER.info("ColumnSizeSubHeader: {}", subheader);
-		if (subheader.numColumns.intValue() != header.rowSizeSubHeader.getColumnCount()) {
-			throw new IllegalArgumentException("Column Count Mismatch");
-		}
 
 
 	}
 
 	protected static void processTextSubHeader(DatasetBdat dataset, Page page, SubHeaderPointer pointer, RandomAccessFileInputStream stream)throws IOException {
 
-		LOGGER.info("processTextSubHeader");
+		LOGGER.info("processTextSubHeader offset: {}",stream.getRandomAccessFile().getFilePointer());
+		
 		
 		//SasConstants.debugBytes(stream, 100);
 		
 
 		TextSubHeader subHeader = TextSubHeader.STRUCT.unpackEntity(stream);
-		subHeader.dataset = dataset;
+		//subHeader.dataset = dataset;
 		LOGGER.info("TextSubHeader: {}", subHeader);
 		pointer.subHeader = subHeader;
-		Compression comp = Compression.STRUCT.unpackEntity(stream);
-		subHeader.compression = comp;
+		//Compression comp = Compression.STRUCT.unpackEntity(stream);
+		//subHeader.compression = comp;
 		
-		LOGGER.info("compression: {}", comp);
+		LOGGER.info("offset: {}",stream.getRandomAccessFile().getFilePointer());
+		
+		//LOGGER.info("compression: {}", subHeader.compression);
 		
 		//LOGGER.info("Compression: {}", );
 
-		Integer stringLength;
-		Integer stringOffset = TextSubHeader.STRUCT.byteCount() + Compression.STRUCT.byteCount();
 		
-		if(StringUtils.isBlank(comp.compression)) {
-			//file is not compressed, LCS = 0;
-			if(dataset.rowSizeSubHeader.creatorProcLength > 0) {
-				subHeader.creatorProcess =  (String) Struct.unpack(TokenType.String, dataset.rowSizeSubHeader.creatorProcLength, StandardCharsets.US_ASCII, stream);
-				//start = start - (TextSubHeader.STRUCT.byteCount() + Compression.STRUCT.byteCount() + dataset.rowSizeSubHeader.creatorProcLength);
-				//int offset = (TextSubHeader.STRUCT.byteCount() + Compression.STRUCT.byteCount() + dataset.rowSizeSubHeader.creatorProcLength);
-				stringOffset += dataset.rowSizeSubHeader.creatorProcLength;
-				stringLength = subHeader.length - Compression.STRUCT.byteCount() - dataset.rowSizeSubHeader.creatorProcLength;
+		//Integer stringLength;
+		subHeader.string = (String) Struct.unpack(TokenType.String, subHeader.length, StandardCharsets.US_ASCII, stream);
+		//LOGGER.info("string: {}",subHeader.string);
+		//we need to
+		//Integer stringOffset = TextSubHeader.STRUCT.byteCount();
+		
+		/*if(dataset.rowSizeSubHeader.creatorProcLength > 0) {
+			//subHeader.creatorProcess = subHeader.string.substring(dataset.rowSizeSubHeader.creatorProcOffset, dataset.rowSizeSubHeader.creatorProcLength);
+			subHeader.creatorProcess = subHeader.getSubString(dataset.rowSizeSubHeader.creatorProcOffset, dataset.rowSizeSubHeader.creatorProcLength);
+			LOGGER.info("creatorProcess: '{}'",subHeader.creatorProcess);
+		}
+		
+		if(dataset.rowSizeSubHeader.creatorProcLength > 0) {
+			//subHeader.creatorProcess = subHeader.string.substring(dataset.rowSizeSubHeader.creatorProcOffset, dataset.rowSizeSubHeader.creatorProcLength);
+			subHeader.creatorProcess = subHeader.getSubString(dataset.rowSizeSubHeader.creatorProcOffset, dataset.rowSizeSubHeader.creatorProcLength);
+			LOGGER.info("creatorProcess: '{}'",subHeader.creatorProcess);
+		}*/
+		
+		/*	if(StringUtils.isBlank(subHeader.compression)) {
+				//file is not compressed, LCS = 0;
+				if(dataset.rowSizeSubHeader.creatorProcLength > 0) {
+					subHeader.creatorProcess =  (String) Struct.unpack(TokenType.String, dataset.rowSizeSubHeader.creatorProcLength, StandardCharsets.US_ASCII, stream);
+					LOGGER.info("creatorProcess: {}",subHeader.creatorProcess);
+					//start = start - (TextSubHeader.STRUCT.byteCount() + Compression.STRUCT.byteCount() + dataset.rowSizeSubHeader.creatorProcLength);
+					//int offset = (TextSubHeader.STRUCT.byteCount() + Compression.STRUCT.byteCount() + dataset.rowSizeSubHeader.creatorProcLength);
+					stringOffset += dataset.rowSizeSubHeader.creatorProcLength;
+					stringLength = subHeader.length - Compression.STRUCT.byteCount() - dataset.rowSizeSubHeader.creatorProcLength;
+				}
+				else {
+					throw new NotImplementedException("Compression was: "+subHeader.compression);
+				}
 			}
 			else {
-				throw new NotImplementedException("Compression was: "+subHeader.compression);
-			}
-		}
-		else {
-			//throw new NotImplementedException("Compression was: "+subHeader.compression);
-			if(dataset.rowSizeSubHeader.creatorSoftwareLength > 0) {
-				String creatorSoftware = comp.compression.substring(0, dataset.rowSizeSubHeader.creatorSoftwareLength);
-				LOGGER.info("creatorSoftware: {}",creatorSoftware);
-				//int offset = (TextSubHeader.STRUCT.byteCount() + Compression.STRUCT.byteCount());
-				//subHeader.offset = 0-offset;
-				stringLength = subHeader.length - Compression.STRUCT.byteCount() - dataset.rowSizeSubHeader.creatorSoftwareLength;
-			}
-			else throw new NotImplementedException("Compression was: "+subHeader.compression);
-			
-		}
+				//throw new NotImplementedException("Compression was: "+subHeader.compression);
+				if(dataset.rowSizeSubHeader.creatorSoftwareLength > 0) {
+					
+					String creatorSoftware = subHeader.compression.substring(0, dataset.rowSizeSubHeader.creatorSoftwareLength);
+					LOGGER.info("creatorSoftware: {}",creatorSoftware);
+					stringLength = subHeader.length - Compression.STRUCT.byteCount() - dataset.rowSizeSubHeader.creatorSoftwareLength;
+					
+				}
+				else throw new NotImplementedException("Compression was: "+subHeader.compression);
+				
+			}*/
 
-		subHeader.offset = 0-stringOffset;
-		String strings =  (String) Struct.unpack(TokenType.String, stringLength, StandardCharsets.US_ASCII, stream);
-		LOGGER.info("text: '{}'",strings);
-		subHeader.string = strings;
+		//subHeader.offset = 0-stringOffset;
+		
+		//String strings =  (String) Struct.unpack(TokenType.String, stringLength, StandardCharsets.US_ASCII, stream);
+		//LOGGER.info("text: '{}'",strings);
+		//subHeader.string = strings;
 
+		
 	}
 
 	//public static int SUB_HEADER_POINTER_LENGTH = 8;
@@ -515,7 +547,7 @@ public class ParserBdat {
 			ColumnName cns = ColumnName.STRUCT.unpackEntity(stream);
 			cns.dataset = dataset;
 			LOGGER.info("ColumnName: {}", cns);
-			LOGGER.info("Name: {}", cns.getName());
+			//LOGGER.info("Name: {}", cns.getName());
 			subHeader.getColumnNames().add(cns);
 
 		}
@@ -593,7 +625,7 @@ public class ParserBdat {
 
 		LOGGER.info("processDataSubHeader");
 
-		if (dataset.compression) {
+		if (dataset.getCompressed()) {
 			//TODO
 			throw new NotImplementedException();
 		}

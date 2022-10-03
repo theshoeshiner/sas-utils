@@ -16,6 +16,7 @@
 	</root>
 
 	<logger name="org.thshsh.struct" level="INFO"/>
+	
 
 
 </configuration>

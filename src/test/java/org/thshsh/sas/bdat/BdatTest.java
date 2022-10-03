@@ -1,91 +1,76 @@
 package org.thshsh.sas.bdat;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URISyntaxException;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.thshsh.sas.Library;
+import org.thshsh.sas.TestFile;
+import org.thshsh.sas.TestUtils;
 import org.thshsh.sas.xpt.XptTest;
 
-public class BdatTest {
+public class BdatTest extends TestUtils {
+	
 	
 	@Test
-	public void testMetadata() {
-		
+	public void testNumeric1() throws IOException, URISyntaxException {
+		test(new TestFile(findFile("numeric1")));
 	}
 	
 	@Test
-	public void testBdatWithTime() throws Exception, URISyntaxException {
-		
-		File file = new File(LibraryBdat.class.getResource("dataset-with-time.sas7bdat").toURI());
-		
-		LibraryBdat library = ParserBdat.parseLibrary(file);
-		
-		XptTest.libraryToCsv(library, file);
-	}
-
-	
-
-	@Test
-	public void testEventrepository() throws Exception, URISyntaxException {
-		
-		File file = new File(LibraryBdat.class.getResource("eventrepository.sas7bdat").toURI());
-		
-		LibraryBdat library = ParserBdat.parseLibrary(file);
-		
-		XptTest.libraryToCsv(library, file);
-	}
-	
-	
-	@Test
-	public void testCrime() throws Exception, URISyntaxException {
-		
-		File file = new File(LibraryBdat.class.getResource("crime.sas7bdat").toURI());
-		
-		LibraryBdat library = ParserBdat.parseLibrary(file);
-		
-		XptTest.libraryToCsv(library, file);
+	public void testNumeric2() throws IOException, URISyntaxException {
+		test(new TestFile(findFile("numeric2")));
 	}
 	
 	@Test
-	public void testDCSKINPRODUCT() throws Exception, URISyntaxException {
-		
-		File file = new File(LibraryBdat.class.getResource("DCSKINPRODUCT.sas7bdat").toURI());
-		
-		LibraryBdat library = ParserBdat.parseLibrary(file);
-		
-		XptTest.libraryToCsv(library, file);
+	public void testNumeric3() throws IOException, URISyntaxException {
+		test(new TestFile(findFile("numeric3")));
 	}
 	
 	@Test
-	public void testCps() throws Exception, URISyntaxException {
-		
-		File file = new File(LibraryBdat.class.getResource("cps.sas7bdat").toURI());
-		
-		LibraryBdat library = ParserBdat.parseLibrary(file);
-		
-		XptTest.libraryToCsv(library, file);
-	}
-	
-	
-	@Test
-	public void testBdatFormats() throws Exception, URISyntaxException {
-		
-		File file = new File(LibraryBdat.class.getResource("formats.sas7bdat").toURI());
-		
-		LibraryBdat library = ParserBdat.parseLibrary(file);
-		
-		XptTest.libraryToCsv(library, file);
-		
+	public void testPercents() throws IOException, URISyntaxException {
+		test(new TestFile(findFile("percents")));
 	}
 	
 	@Test
-	public void testBasicBdat() throws Exception, URISyntaxException {
-		
-		File file = new File(LibraryBdat.class.getResource("lib.sas7bdat").toURI());
-		
-		LibraryBdat library = ParserBdat.parseLibrary(file);
-		
-		XptTest.libraryToCsv(library, file);
+	public void fileWithLabel() throws IOException, URISyntaxException {
+		test(new TestFile(findFile("file_with_label")));
+	}
+	
+	@Test
+	public void testCompDeleted() throws IOException, URISyntaxException {
+		test(new TestFile(findFile("comp_deleted")));
+	}
+	
+	/*@Test
+	public void testNumeric4() throws IOException, URISyntaxException {
+		test(new TestFile(findFile("numeric4")));
+	}*/
+	
+	@Test
+	public void testMixed1() throws IOException, URISyntaxException {
+		test(new TestFile(findFile("mixed1")));
+	}
+	
+	@Test
+	public void testMixed2() throws IOException, URISyntaxException {
+		test(new TestFile(findFile("mix_data_misc")));
 	}
 
+	@Override
+	public Library getLibrary(File file) throws IOException {
+		return ParserBdat.parseLibrary(file);
+	}
+	
+	public File findFile(String prefix) {
+		File folder = new File("./src/test/resources/org/thshsh/sas/bdat");
+		for(File file : folder.listFiles()) {
+			if(file.getName().startsWith(prefix)) return file;
+		}
+		
+		throw new IllegalArgumentException("File with prefix: "+prefix+" not found");
+	}
+	
 }

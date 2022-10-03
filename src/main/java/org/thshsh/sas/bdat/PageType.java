@@ -1,19 +1,40 @@
 package org.thshsh.sas.bdat;
 
 enum PageType {
-	Meta(0,true,false),Data(256,false,false),Mixed1(512,true,true),Mixed2(640,true,true),Amd(2014,true,false),Metc(16384,false,false),Comp(-28672,false,false);
+	
+	//metadata with potentially compressed row data in subheaders
+	Meta(0,true,false),
+	Meta2(16384,true,false),
+	CMeta(128,true,false),
+	
+	//data pages storing uncompressed row data with no subheaders
+	Data(256,false,true),
+	Data2(384,false,true),
+	
+	Mixed1(512,true,true), // Mix pages that contain all valid records
+	Mixed2(640,true,true),  // Mix pages that contain valid and deleted records
+	
+	Amd(2014,true,false), //amended metadata information
+	
+	//unknown
+	Comp(-28672,false,false);
+	
 	int id;
 	boolean meta;
-	boolean mixed;
-	private PageType(int id,boolean meta,boolean mixed) {
+	boolean data;
+	private PageType(int id,boolean meta,boolean data) {
 		this.id = id;
 		this.meta = meta;
-		this.mixed = mixed;
+		this.data = data;
+	}
+	public boolean mixed() {
+		return data && meta;
 	}
 	public static PageType fromId(Integer id) {
 		for(PageType s : values()) {
 			if(id.equals(s.id)) return s;
 		}
-		return null;
+		//throw new ElementNotFoundException();
+		throw new IllegalArgumentException("PageType "+id+" not found");
 	}
 }

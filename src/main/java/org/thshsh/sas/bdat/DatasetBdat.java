@@ -39,11 +39,8 @@ public class DatasetBdat extends Dataset {
 		}
 	}*/
 
-	static byte U64_BYTE_CHECKER_VALUE = 51;
-	static byte ALIGN_1_CHECKER_VALUE = 51;
-
-	static int ALIGN_1_DEFAULT = 4;
-	static int ALIGN_2_DEFAULT = 4;
+	
+	
 
 	//static int PAGE_OFFSET_X86 = 16;
 	//static int PAGE_OFFSET_X64 = 32;
@@ -65,14 +62,45 @@ public class DatasetBdat extends Dataset {
 	RowSizeSubHeader rowSizeSubHeader;
 	ColumnNamesSubHeader columnNamesSubHeader;
 	ColumnAttributesSubHeader columnAttributesSubHeader;
-
+	ColumnSizeSubHeader columnSizeSubHeader;
+	
 	List<FormatAndLabelSubHeader> formatAndLabels = new ArrayList<>();
 
-	Boolean compression = false;
+	//Boolean compression = false;
 
 
 
 	public DatasetBdat() {
+	}
+	
+	
+	
+	public Long getColumnCount() {
+		return rowSizeSubHeader.getColumnCount();
+	}
+
+
+
+	public Integer getRowLength() {
+		return rowSizeSubHeader.getRowLength();
+	}
+
+
+
+	public Integer getRowCount() {
+		return rowSizeSubHeader.getRowCount();
+	}
+
+
+
+	public Integer getPageCount() {
+		return rowSizeSubHeader.getPageCount();
+	}
+
+
+
+	public Boolean getCompressed() {
+		return rowSizeSubHeader.getCompressed();
 	}
 
 	public Long getObservationCount() {
@@ -128,42 +156,33 @@ public class DatasetBdat extends Dataset {
 	}
 
 	public Optional<String> getSubHeaderString(int index, int start, int length) {
-		if (length == 0)
-			return Optional.empty();
-		return getStringSubHeaders().skip(index).map(h -> h.getSubString(start, length)).findFirst();
+		return getSubHeaderString(index, start, length,true);
+	}
+	
+	public Optional<String> getSubHeaderString(int index, int start, int length,boolean trim) {
+		if (length == 0) return Optional.empty();
+		
+		return getStringSubHeaders().skip(index).map(h -> {
+			String s = h.getSubString(start, length);
+			return trim?s.trim():s;
+			}).findFirst();
 	}
 
 	public void setHeader1(Header1 h1) {
 		header1 = h1;
 	}
 
-	public Boolean get64Bit() {
+	/*public Boolean get64Bit() {
 		return header1.align1 == U64_BYTE_CHECKER_VALUE;
-	}
+	}*/
 
-	public Integer getIntegerLength() {
-		return get64Bit() ? 8 : 4;
-	}
-
-	public int getHeader1Padding() {
-		return (header1.align2 == ALIGN_1_CHECKER_VALUE) ? ALIGN_1_DEFAULT : 0;
-	}
-
-	public int getHeader2Padding() {
-		return (header1.align1 == U64_BYTE_CHECKER_VALUE) ? ALIGN_2_DEFAULT : 0;
-	}
+	
 
 	/*public int getPageOffset() {
 		return this.get64Bit()?PAGE_OFFSET_X64:PAGE_OFFSET_X86;
 	}*/
 
-	public int getSubHeaderPointerLength() {
-		return get64Bit() ? 24 : 12;
-	}
-
-	public TokenType getIntegerTokenType() {
-		return get64Bit() ? TokenType.Long : TokenType.Integer;
-	}
+	
 
 	public ByteOrder getByteOrder() {
 		return header1.littleEndian ? ByteOrder.Little : ByteOrder.Big;
@@ -171,6 +190,31 @@ public class DatasetBdat extends Dataset {
 
 	public Platform getPlatform() {
 		return Platform.values()[Integer.valueOf(header1.platform)];
+	}
+	
+	public Optional<String> getCompression() {
+		return getSubHeaderString(0, rowSizeSubHeader.compressionMethodOffset, rowSizeSubHeader.compressionMethodLength);
+	}
+	
+	public CompressionAlgorithm getCompressionAlgorithm() {
+		Optional<String> comp = getCompression();
+		if(!comp.isPresent()) return null;
+		else {
+			try {
+				return CompressionAlgorithm.valueOf(comp.get());
+			} 
+			catch (IllegalArgumentException  e) {
+				return null;
+			}
+		}
+	}
+	
+	public Optional<String>  getCreatorProcess() {
+		return getSubHeaderString(0, rowSizeSubHeader.creatorProcOffset, rowSizeSubHeader.creatorProcLength);
+	}
+	
+	public Optional<String>  getCreatorSoftware() {
+		return getSubHeaderString(0, rowSizeSubHeader.creatorSoftwareOffset, rowSizeSubHeader.creatorSoftwareLength);
 	}
 
 	public List<Page> getPages() {
@@ -196,13 +240,33 @@ public class DatasetBdat extends Dataset {
 					|| (page.getPageType().mixed && rowSizeSubHeader.mixedPageRowCount.intValue() > 0);
 	}*/
 
-	public Integer getObservationCount(Page page) {
-		if (page.getPageType() == PageType.Data)
-			return page.getBlockCount();
+	/*public Integer getTotalObservationCount(Page page) {
+		return getBlockObservationCount(page) + getHeaderObservationCount(page);
+	}*/
+	
+	/*//TODO this needs to be separate from the sub header pointer calc
+	public Integer getBlockObservationCount(Page page) {
+		//LOGGER.debug("getObservationCount: {}",page);
+		
+		LOGGER.debug("getHeaderObservationCount: {} = {}",page,count);
+		
+		if (page.getPageType().data) return page.getBlockCount();
+		return 0;
 		//else if(page.getPageType() == PageType.Mixed1 || page.getPageType() == PageType.Mixed2) return rowSizeSubHeader.mixedPageRowCount.intValue();
-		else
-			return 0;
+	
+			//return 0;
 	}
+	
+	public Integer getHeaderObservationCount(Page page) {
+		
+		//LOGGER.info("shps: {}",page.getSubHeaderPointers().size());
+		int count = (int)page.getDataSubHeaderPointers().count();
+		LOGGER.debug("getHeaderObservationCount: {} = {}",page,count);
+		//LOGGER.info("data sub headers: {}",count);
+		return count;
+	}
+	*/
+	
 
 	/*public static DatasetBdat from_file(RandomAccessFileInputStream stream) throws IOException, InstantiationException, IllegalAccessException {
 	

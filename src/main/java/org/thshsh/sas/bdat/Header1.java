@@ -12,8 +12,15 @@ public class Header1 {
 	
 	public static final Struct<Header1> STRUCT = Struct.create(Header1.class);
 
+	static byte U64_BYTE_CHECKER_VALUE = 51;
+	
+	static byte ALIGN_1_CHECKER_VALUE = 51;
+
+	static int ALIGN_1_DEFAULT = 4;
+	static int ALIGN_2_DEFAULT = 4;
+	
+	@StructTokenPrefix({@StructToken(type = TokenType.Bytes,validate=false,constant = "000000000000000000000000c2ea8160b31411cfbd92080009c7318c181f1011")})
 	@StructToken(order=1)
-	@StructTokenPrefix({@StructToken(type = TokenType.Bytes,constant = "000000000000000000000000c2ea8160b31411cfbd92080009c7318c181f1011")})
 	@StructTokenSuffix({@StructToken(type = TokenType.Bytes,constant = "0000",validate = false)})
 	public Byte align1;
 	
@@ -104,7 +111,30 @@ public class Header1 {
 	}
 
 
+	public Boolean get64Bit() {
+		return align1 == U64_BYTE_CHECKER_VALUE;
+	}
+	
+	public Integer getIntegerLength() {
+		return get64Bit() ? 8 : 4;
+	}
 
+	public int getHeader1Padding() {
+		return (align2 == ALIGN_1_CHECKER_VALUE) ? ALIGN_1_DEFAULT : 0;
+	}
+
+	public int getHeader2Padding() {
+		return (align1 == U64_BYTE_CHECKER_VALUE) ? ALIGN_2_DEFAULT : 0;
+	}
+	
+	public int getSubHeaderPointerLength() {
+		return get64Bit() ? 24 : 12;
+	}
+
+	public TokenType getIntegerTokenType() {
+		return get64Bit() ? TokenType.Long : TokenType.Integer;
+	}
+	
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
@@ -122,6 +152,12 @@ public class Header1 {
 		builder.append(datasetName);
 		builder.append(", fileType=");
 		builder.append(fileType);
+		builder.append(", 64Bit=");
+		builder.append(get64Bit());
+		builder.append(", getHeader1Padding=");
+		builder.append(getHeader1Padding());
+		builder.append(", getHeader1Padding=");
+		builder.append(getHeader2Padding());
 		builder.append("]");
 		return builder.toString();
 	}

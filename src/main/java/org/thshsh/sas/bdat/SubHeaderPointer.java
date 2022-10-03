@@ -10,7 +10,7 @@ public class SubHeaderPointer {
 	public static final Struct<SubHeaderPointer> STRUCT = Struct.create(SubHeaderPointer.class);
 	
 	@StructToken(order=0) //TODO long when 64
-	public Integer offset;
+	public Integer pageOffset;
 	
 	@StructToken(order=1)
 	public Integer length; //TODO long when 64
@@ -19,26 +19,28 @@ public class SubHeaderPointer {
 	//protected byte[] prefix;
 	
 	@StructToken(order=2)
-	public Byte compressionTypeId; //0=none,1=truncated(ignore data),4= RLE compressed row data with control byte
+	public Byte compressionTypeId; //0=none,1=truncated(ignore data),4= compressed row data with control byte
 	
 	
 	/**
 	 * 0 Row Size, Column Size, Subheader Counts, Column Format and Label, in Uncompressed file
-1 Column Text, Column Names, Column Attributes, Column List
-1 all subheaders (including row data), in Compressed file.
+		1 Column Text, Column Names, Column Attributes, Column List
+		1 all subheaders (including row data), in Compressed file.
 	 */
 	@StructToken(order=3)
-	@StructTokenSuffix({@StructToken(type = TokenType.Bytes,constant = "0000")}) //TODO 6 bytes when 64
-	public Byte typeId;
+	@StructTokenSuffix({@StructToken(type = TokenType.Bytes,constant = "0000",validate = false)}) //TODO 6 bytes when 64
+	public Byte categoryId;
 	
+	public SubHeaderSignature signature;
+
+	public SubHeader subHeader;
 	
-	
-	public Integer getOffset() {
-		return offset;
+	public Integer getPageOffset() {
+		return pageOffset;
 	}
 
-	public void setOffset(Integer offset) {
-		this.offset = offset;
+	public void setPageOffset(Integer offset) {
+		this.pageOffset = offset;
 	}
 
 	public Integer getLength() {
@@ -61,13 +63,13 @@ public class SubHeaderPointer {
 		return CompressionType.fromId(compressionTypeId.intValue());
 	}
 
-	public Byte getTypeId() {
+	/*public Byte getTypeId() {
 		return typeId;
 	}
-
+	
 	public void setTypeId(Byte typeId) {
 		this.typeId = typeId;
-	}
+	}*/
 
 	public SubHeaderSignature getSignature() {
 		return signature;
@@ -84,28 +86,45 @@ public class SubHeaderPointer {
 	public void setSubHeader(SubHeader subHeader) {
 		this.subHeader = subHeader;
 	}
+	
+	
 
-	public SubHeaderSignature signature;
+	public Byte getCategoryId() {
+		return categoryId;
+	}
 
-	public SubHeader subHeader;
+	public void setCompressed(Byte compressed) {
+		this.categoryId = compressed;
+	}
+
+
+	public SubHeaderCategory getCategory() {
+		return SubHeaderCategory.fromId(categoryId.intValue());
+	}
+
+	
 
 
 
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
-		builder.append("SubHeaderPointer [offset=");
-		builder.append(offset);
+		builder.append("SubHeaderPointer [pageOffset=");
+		builder.append(pageOffset);
 		builder.append(", length=");
 		builder.append(length);
 		builder.append(", compressionTypeId=");
 		builder.append(compressionTypeId);
-		builder.append(", typeId=");
-		builder.append(typeId);
+		builder.append(", categoryId=");
+		builder.append(categoryId);
 		builder.append(", signature=");
 		builder.append(signature);
 		builder.append(", subHeader=");
 		builder.append(subHeader);
+		builder.append(", getCompressionType()=");
+		builder.append(getCompressionType());
+		builder.append(", getCategory()=");
+		builder.append(getCategory());
 		builder.append("]");
 		return builder.toString();
 	}

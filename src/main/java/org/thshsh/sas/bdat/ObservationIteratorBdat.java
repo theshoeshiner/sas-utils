@@ -1,9 +1,11 @@
 package org.thshsh.sas.bdat;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
 
+import org.apache.commons.collections.IteratorUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.RandomAccessFileInputStream;
 import org.slf4j.Logger;
@@ -16,211 +18,252 @@ import org.thshsh.struct.TokenType;
 
 public class ObservationIteratorBdat implements Iterator<Observation> {
 
+	static final Logger LOGGER = LoggerFactory.getLogger(ObservationIteratorBdat.class);
+
+	protected RandomAccessFileInputStream stream;
+	protected DatasetBdat dataset;
 	
-static final Logger LOGGER = LoggerFactory.getLogger(ObservationIteratorBdat.class);
-	
-/*	public static final String CHARSET = "ISO-8859-1";
-	public static final byte SENTINEL = ' ';
-	public static final char NO_VALUE = '.';
-	public static final Struct<?> IBM = Struct.create(">Q");
-	public static final char[] SPECIAL = "ABCDEFGHIJKLMNOPQRSTUVWXYZ_".toCharArray();*/
-	
-	//int stride = 0;
-	//byte[] chunk;
-	RandomAccessFileInputStream stream;
-	DatasetBdat member;
-	Struct<?> struct;
-	Boolean hasNext = null;
-	Boolean needToRead = true;
-//	Stream<Page> pages;
-	Iterator<Page> pages;
-	Page currentPage;
-	int currentBlock = 0;
-	int currentBlockCount = 0;
-	Observation currentObservation;
+	protected Iterator<Page> pageIterator;
+	protected Iterator<Observation> currentPageObservationIterator;
 	
 	
-	public ObservationIteratorBdat(DatasetBdat m,RandomAccessFileInputStream in)  {
+	
+	@SuppressWarnings("unchecked")
+	public ObservationIteratorBdat(DatasetBdat dataset,RandomAccessFileInputStream stream)  {
 		
-		this.member = m;
-		this.stream = in;
+		this.dataset = dataset;
+		this.stream = stream;
+		this.pageIterator = dataset.getPages().stream().filter(p -> p.getTotalObservationCount() > 0).iterator();
 		
-		
-		this.pages = m.getPages().stream().filter(p -> m.getObservationCount(p) > 0).iterator();
-		
-		
-		//StringBuilder formatString = new StringBuilder();
-		
-		/*for(VariableBdat var : member.getVariables()) {
-			stride+= var.getLength();
-			formatString.append(var.getLength());
-			formatString.append(var.getVariableType() == VariableType.Numeric?"s":"S");
+		if(pageIterator.hasNext()) {
+			nextPage();
+		}
+		else {
+			currentPageObservationIterator = IteratorUtils.EMPTY_ITERATOR;
 		}
 		
-		struct = Struct.create(formatString.toString(),Charset.forName(CHARSET));
-		
-		try {
-			IOUtils.skip(is, member.getObservationStartByte());
-		} 
-		catch (IOException e) {
-			throw new IllegalArgumentException(e);
-		}
-		chunk = new byte[stride];
-		*/
 	}
-	
+
 	
 	@Override
 	public boolean hasNext() {
-		readIfNecessary();
-		return hasNext;
-	}
-	
-	
-	
-	protected void readIfNecessary() {
-		try {
-			if(needToRead) {
-				
-				if(currentPage == null || currentBlock == currentBlockCount) {
-					if(pages.hasNext()) {
-						currentPage = pages.next();
-						stream.getRandomAccessFile().seek(currentPage.startByte);
-						IOUtils.skipFully(stream, 24);
-						currentBlock = 0;
-						currentBlockCount = member.getObservationCount(currentPage);
-						hasNext = true;
-					}
-					else {
-						currentPage = null;
-						hasNext = false;
-					}
-				}
-				
-				if(currentPage != null) {
-					
-					
-					
-					LOGGER.info("reading block {} of page {}",currentBlock,currentPage);
-					
-					currentObservation = new Observation();
-					
-					byte[] rowBytes = new byte[member.rowSizeSubHeader.rowLength.intValue()];
-					IOUtils.readFully(stream, rowBytes);
-					
-					//ByteBuffer buffer = ByteBuffer.wrap(row);
-
-					ByteArrayInputStream rowStream = new ByteArrayInputStream(rowBytes);
-					
-					for(VariableBdat var : member.getVariables()) {
-						
-						LOGGER.info("Variable: {}",var);
-						//buffer.position(var.attributes.offset.intValue());
-						rowStream.reset();
-						//row.skip(currentBlock)
-						
-						Object value;
-						Integer length = var.getLength();
-						VariableType type =  var.getType();
-						
-						//skip to proper offset
-						IOUtils.skipFully(rowStream, var.attributes.offset.longValue());
-						
-						switch(type) {
-						
-							case Character:
-								
-								Struct<?> s = Struct.create(length+"S");
-								List<Object> ob = s.unpack(rowStream);
-								value = ob.get(0).toString().trim();
-								
-								break;
-							case Numeric:
-								
-								if(length == 1) {
-									value = Struct.unpack(TokenType.Boolean, member.getByteOrder(),rowStream);
-								}
-								else if(length == 2) {
-									value = Struct.unpack(TokenType.Short,member.getByteOrder(), rowStream);
-								}
-								else if(length == 8) {
-									value = Struct.unpack(TokenType.Double,member.getByteOrder(), rowStream);
-								}
-								else if(length < 8) {
-									byte[] src = new byte[length];
-									IOUtils.readFully(rowStream, src);
-									byte[] full = new byte[] {0,0,0,0,0,0,0,0};
-									System.arraycopy(src, 0, full, member.getByteOrder()==ByteOrder.Big?0:8-length, length);
-									value = Struct.unpack(TokenType.Double,member.getByteOrder(), full);
-								}
-								else throw new IllegalArgumentException("Numeric length is > 8");
-								
-								break;
-							default:
-								throw new IllegalStateException();
-						
-						}
-						
-						LOGGER.info("Value: {}",value);			
-						
-						currentObservation.putValue(var, value);
-						
-						
-					}
-					
-					
-					currentBlock++;
-					
-					
-				}
-				needToRead = false;
-				/*int read = is.read(chunk);
-				if(read != stride) {
-					LOGGER.info("Only read {} bytes",read);
-					hasNext = false;
-				}
-				else {
-					hasNext = false;
-					for(byte b : chunk) {
-						if(b != SENTINEL) {
-							hasNext = true;
-							break;
-						}
-					}
-				}
-				needToRead = false;*/
-			}
-		} 
-		catch (Exception e) {
-			throw new IllegalStateException(e);
-		}
+		return pageIterator.hasNext() || currentPageObservationIterator.hasNext();
 	}
 
 	@Override
 	public Observation next() {
-		
-		readIfNecessary();
-		needToRead = true;
-		
-		//Observation ob = new Observation();
-		
-		
-		
-		/*List<Object> tokens = struct.unpack(chunk);
-		
-		if(tokens.size() != member.getVariables().size()) throw new IllegalStateException("Token Count: "+tokens.size()+" Not Equal to Header Count: "+member.getVariables().size());
-		
-		Observation ob = new Observation();
-		
-		for(int i=0;i<member.getVariables().size();i++) {
-			VariableXpt vm = this.member.getVariables().get(i);
-			Object val = tokens.get(i);
-			if(vm.getVariableType() == VariableType.Numeric) val = ObservationIteratorXpt.ibm_to_ieee((byte[]) val);
-			ob.putValue(vm, val);
-		}*/
-		
-		return currentObservation;
-
+		Observation observation = currentPageObservationIterator.next();
+		if(!currentPageObservationIterator.hasNext()) {
+			if(pageIterator.hasNext()) {
+				nextPage();
+			}
+		}
+		return observation;
 	}
 	
+	@SuppressWarnings("unchecked")
+	protected void nextPage() {
+		Page currentPage = pageIterator.next();
+		LOGGER.info("nextPage: {}",currentPage);
+		DataSubHeaderIterator dshi = new DataSubHeaderIterator(dataset, currentPage, stream);
+		DataBlockIterator dbi = new DataBlockIterator(dataset,currentPage,stream);
+		currentPageObservationIterator = IteratorUtils.chainedIterator(dshi, dbi);
+	}
+	
+	
+	
+	public static Observation readRowFromStream(DatasetBdat member, RandomAccessFileInputStream stream, Integer rowDataLength) throws IOException {
+		
+		LOGGER.info("readRowFromStream comp: {}",member.getCompression());
+		
+		byte[] rowBytes = new byte[rowDataLength];
+		IOUtils.readFully(stream, rowBytes);
+		
+		if(rowDataLength < member.getRowLength()) {
+			if(member.getCompressed()) {
+				//this data is compressed
+				Compressor compressor;
+				switch(member.getCompressionAlgorithm()) {
+				case SASYZCR2:
+					compressor = new RdcCompressor();
+					break;
+				case SASYZCRL:
+					compressor = new RleCompressor();
+					break;
+				default:
+					throw new IllegalArgumentException("Compression unknown");
+				}
+				
+				LOGGER.info("decompressing data using: {}",compressor);
+				
+				rowBytes = compressor.decompressRow(member.getRowLength(), rowBytes);
+			}
+			else {
+				throw new IllegalArgumentException("Row data length ("+rowDataLength+") should equal dataset row length ("+member.getRowLength()+") for uncompressed files");
+			}
+
+		}
+		
+		Observation currentObservation = new Observation();
+		
+		
+		
+		//ByteBuffer buffer = ByteBuffer.wrap(row);
+
+		ByteArrayInputStream rowStream = new ByteArrayInputStream(rowBytes);
+		
+		for(VariableBdat var : member.getVariables()) {
+			
+			//LOGGER.info("Variable: {}",var);
+			//buffer.position(var.attributes.offset.intValue());
+			rowStream.reset();
+			//row.skip(currentBlock)
+			
+			Object value;
+			Integer length = var.getLength();
+			VariableType type =  var.getType();
+			
+			//skip to proper offset
+			IOUtils.skipFully(rowStream, var.attributes.offset.longValue());
+			
+			switch(type) {
+			
+				case Character:
+					
+					Struct<?> s = Struct.create(length+"S");
+					List<Object> ob = s.unpack(rowStream);
+					value = ob.get(0).toString().trim();
+					
+					break;
+				case Numeric:
+					
+					if(length == 1) {
+						value = Struct.unpack(TokenType.Boolean, member.getByteOrder(),rowStream);
+					}
+					else if(length == 2) {
+						value = Struct.unpack(TokenType.Short,member.getByteOrder(), rowStream);
+					}
+					else if(length == 8) {
+						value = Struct.unpack(TokenType.Double,member.getByteOrder(), rowStream);
+					}
+					else if(length < 8) {
+						byte[] src = new byte[length];
+						IOUtils.readFully(rowStream, src);
+						byte[] full = new byte[] {0,0,0,0,0,0,0,0};
+						System.arraycopy(src, 0, full, member.getByteOrder()==ByteOrder.Big?0:8-length, length);
+						value = Struct.unpack(TokenType.Double,member.getByteOrder(), full);
+					}
+					else throw new IllegalArgumentException("Numeric length is > 8");
+					
+					break;
+				default:
+					throw new IllegalStateException();
+			
+			}
+			
+			LOGGER.info("Value: {} for Variable: {}",value,var);			
+			
+			currentObservation.putValue(var, value);
+			
+			
+		}
+		
+		
+		
+		return currentObservation;
+	}
+	
+	public static class DataBlockIterator implements Iterator<Observation> {
+		
+		private static final Logger LOGGER = LoggerFactory.getLogger(ObservationIteratorBdat.DataBlockIterator.class);
+
+		protected DatasetBdat dataset;
+		protected Page page;
+		protected RandomAccessFileInputStream stream;
+		protected Integer blockCount;
+		protected Integer blockIndex = 0;
+		
+		Observation currentObservation;
+		
+		public DataBlockIterator(DatasetBdat dataset,Page page,RandomAccessFileInputStream in)  {
+			this.dataset = dataset;
+			this.page = page;
+			this.stream = in;
+			this.blockCount = page.getBlockObservationCount();
+		
+		}
+
+		@Override
+		public boolean hasNext() {
+			//as long as there are more data subheaders then we have more observations
+			return blockIndex < blockCount;
+		}
+
+		@Override
+		public Observation next() {
+			try {
+				
+				
+				stream.getRandomAccessFile().seek(
+						page.startByte + 
+						PageHeader.STRUCT.byteCount() + 
+						(SubHeaderPointer.STRUCT.byteCount() * page.getSubHeaderCount()) +
+						(dataset.rowSizeSubHeader.rowLength.intValue() * blockIndex)
+						);
+				
+				LOGGER.info("next block: {}",blockIndex);
+				
+				currentObservation = readRowFromStream(dataset, stream,dataset.getRowLength());
+				blockIndex++;
+				return currentObservation;
+			} catch (IOException e) {
+				throw new IllegalStateException(e);
+			}
+		}
+		
+	}
+	
+	public static class DataSubHeaderIterator implements Iterator<Observation> {
+		
+		
+		private static final Logger LOGGER = LoggerFactory.getLogger(ObservationIteratorBdat.DataSubHeaderIterator.class);
+
+		
+		protected DatasetBdat dataset;
+		protected Page page;
+		protected RandomAccessFileInputStream stream;
+		protected Iterator<SubHeaderPointer> dataSubHeadersIterator;
+
+		public DataSubHeaderIterator(DatasetBdat dataset,Page page,RandomAccessFileInputStream in)  {
+			this.dataset = dataset;
+			this.page = page;
+			this.stream = in;
+			this.dataSubHeadersIterator = page.getDataSubHeaderPointers().iterator();
+		}
+
+		@Override
+		public boolean hasNext() {
+			//as long as there are more data subheaders then we have more observations
+			return dataSubHeadersIterator.hasNext();
+		}
+
+		@Override
+		public Observation next() {
+
+			try {
+				SubHeaderPointer pointer = dataSubHeadersIterator.next();
+				stream.getRandomAccessFile().seek(page.startByte + pointer.getPageOffset());
+		
+				LOGGER.info("reading row from subheader: {}",pointer);
+				
+				return readRowFromStream(dataset, stream,pointer.length);
+				
+			} 
+			catch (IOException e) {
+				throw new IllegalStateException(e);
+			}
+			
+		}
+		
+	}
 }

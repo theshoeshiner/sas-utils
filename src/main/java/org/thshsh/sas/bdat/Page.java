@@ -2,17 +2,20 @@ package org.thshsh.sas.bdat;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
+
+import org.thshsh.sas.Dataset;
 
 public class Page {
 	
+	DatasetBdat dataset;
 	long startByte;
-	/*PageType pageType;
-	int blockCount;
-	int subHeaderCount;*/
-	
 	PageHeader header;
-	
 	List<SubHeaderPointer> subHeaderPointers;
+	
+	public Page(DatasetBdat dataset) {
+		this.dataset = dataset;
+	}
 	
 	public void setHeader(PageHeader header) {
 		this.header = header;
@@ -39,10 +42,34 @@ public class Page {
 		this.subHeaderPointers = subHeaderPointers;
 	}
 	
+	public Stream<SubHeaderPointer> getDataSubHeaderPointers(){
+		return getSubHeaderPointers().stream().filter(shp -> shp.getSignature() == SubHeaderSignature.Data);
+	}
+	
 	public Boolean hasObservations() {
 		return getPageType() == PageType.Data && header.blockCount > 0;
 	}
 
+	
+	public Integer getTotalObservationCount() {
+		return getBlockObservationCount() + getHeaderObservationCount();
+	}
+	
+	public Integer getBlockObservationCount() {
+		
+		if (getPageType().mixed()) return Math.min(dataset.rowSizeSubHeader.mixedPageRowCount, dataset.rowSizeSubHeader.getRowCount());
+		else if (getPageType().data) return getBlockCount();
+		return 0;
+	}
+	
+	public Integer getHeaderObservationCount() {
+		
+		//LOGGER.info("shps: {}",page.getSubHeaderPointers().size());
+		int count = (int)getDataSubHeaderPointers().count();
+		//LOGGER.debug("getHeaderObservationCount: {} = {}",page,count);
+		//LOGGER.info("data sub headers: {}",count);
+		return count;
+	}
 
 	@Override
 	public String toString() {

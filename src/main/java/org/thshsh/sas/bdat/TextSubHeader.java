@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.thshsh.struct.Struct;
 import org.thshsh.struct.StructToken;
+import org.thshsh.struct.StructTokenPrefix;
 import org.thshsh.struct.StructTokenSuffix;
 import org.thshsh.struct.TokenType;
 
@@ -14,17 +15,25 @@ public class TextSubHeader extends SubHeader {
 	public static final Struct<TextSubHeader> STRUCT = Struct.create(TextSubHeader.class);
 	
 	@StructToken(order = 0)
-	@StructTokenSuffix({
+	/*@StructTokenSuffix({
 		@StructToken(type = TokenType.Bytes,constant = "000000000000", validate = false)
-		})
+		})*/
 	public Short length; 
+	
+	/*@StructTokenPrefix({
+		@StructToken(type = TokenType.Bytes,constant = "00000000", validate = false)
+		})
+	@StructToken(order = 1,length = 16)
+	public String compression;*/
 	
 	public String string;
 	
-	public Compression compression;
-	public String creatorProcess;
-	public DatasetBdat dataset;
-	public Integer offset;
+	//These values are embedded in the string object and must be extracted based on indexes in the RowSizeSubheader
+	//public Compression compression;
+	//public String compression;
+	//public String creatorProcess;
+	//public DatasetBdat dataset;
+	//public Integer offset ;
 	
 	public Integer getStringLength() {
 		//length - this length - header
@@ -43,8 +52,8 @@ public class TextSubHeader extends SubHeader {
 		StringBuilder builder = new StringBuilder();
 		builder.append("TextSubHeader [length=");
 		builder.append(length);
-		builder.append(", string=");
-		builder.append(string);
+		//builder.append(", string=");
+		//builder.append(string);
 		builder.append("]");
 		return builder.toString();
 	}
@@ -54,7 +63,7 @@ public class TextSubHeader extends SubHeader {
 	}
 	
 	public String getSubString(int start, int length) {
-		start = start + offset;
+		start = start - STRUCT.byteCount();
 		return string.substring(start, start+length);
 	}
 

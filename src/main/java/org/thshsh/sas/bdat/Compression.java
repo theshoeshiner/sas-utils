@@ -5,6 +5,7 @@ import org.thshsh.struct.StructToken;
 import org.thshsh.struct.StructTokenPrefix;
 import org.thshsh.struct.TokenType;
 
+@Deprecated
 public class Compression {
 	
 	
