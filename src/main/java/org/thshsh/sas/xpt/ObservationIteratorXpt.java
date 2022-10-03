@@ -2,17 +2,16 @@ package org.thshsh.sas.xpt;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.Charset;
 import java.util.Iterator;
 import java.util.List;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.thshsh.sas.Observation;
 import org.thshsh.sas.VariableType;
 import org.thshsh.struct.Struct;
+import org.thshsh.struct.TokenType;
 
 /**
  * This class is used so that we can stream Observations into memory and not have to read them all at once
@@ -27,7 +26,6 @@ public class ObservationIteratorXpt implements Iterator<Observation> {
 	public static final byte SENTINEL = ' ';
 	public static final char NO_VALUE = '.';
 	public static final Struct<?> IBM = Struct.create(">Q");
-	public static final char[] SPECIAL = "ABCDEFGHIJKLMNOPQRSTUVWXYZ_".toCharArray();
 	
 	protected int observationSize = 0;
 	protected byte[] buffer;
@@ -42,16 +40,13 @@ public class ObservationIteratorXpt implements Iterator<Observation> {
 		
 		this.member = m;
 		this.input = in;
-		
-		StringBuilder formatString = new StringBuilder();
-		
+				
+		//observations are stored as a packed struct consisting of either bytes or characters for each variable
+		struct = new Struct<>();
 		for(VariableXpt var : member.getVariables()) {
-			observationSize+= var.getLength();
-			formatString.append(var.getLength());
-			formatString.append(var.getType() == VariableType.Numeric?"s":"S");
+			struct.appendToken(var.getType() == VariableType.Numeric?TokenType.Bytes:TokenType.String, var.getLength());
 		}
-
-		struct = Struct.create(formatString.toString(),Charset.forName(CHARSET));
+		observationSize = struct.byteCount();
 		
 		try {
 			IOUtils.skip(input, member.getObservationStartByte());
@@ -120,7 +115,8 @@ public class ObservationIteratorXpt implements Iterator<Observation> {
 	}
 
 
-	public static Double ibm_to_ieee(byte[] bytes) {
+	@SuppressWarnings("unused")
+	public static Object ibm_to_ieee(byte[] bytes) {
 		
 		
 		byte[] padded = java.util.Arrays.copyOf(bytes , 8);
@@ -132,13 +128,14 @@ public class ObservationIteratorXpt implements Iterator<Observation> {
 		long mantissa = (val & 0x00ffffffffffffffl);
 	
 		if(mantissa == 0) {
+			MissingValue mv;
 			if(bytes[0] == 0x00) return 0d;
 			else if(bytes[0] == 0x80) return -0d;
 			else if(bytes[0] == NO_VALUE) return null;
-			else if(ArrayUtils.contains(SPECIAL, (char)bytes[0])){
-				//TODO handle
-				throw new IllegalArgumentException("Special Missing Value not handled");
-			}
+			//TODO figure out how to handle missing characters in a more generic way
+			//this code would work for numeric values, but there is no way to know for certain
+			//if a character value represented a MissingValue or just actual text
+			else if((mv =  MissingValue.fromCharacter((char) bytes[0])) != null) return null;
 			else throw new IllegalArgumentException("Zero Mantissa Value was not readable");
 		}
 		
@@ -148,7 +145,7 @@ public class ObservationIteratorXpt implements Iterator<Observation> {
 		else if( (val & 0x0040000000000000l) > 0) shift = 2;
 		else if( (val & 0x0020000000000000l) > 0) shift = 1;
 	    else shift = 0;
-		
+				
 		mantissa = mantissa >> shift;
 		mantissa = mantissa & 0xffefffffffffffffl;
 		exponent -= 65;

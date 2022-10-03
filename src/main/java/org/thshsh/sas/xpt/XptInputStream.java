@@ -8,6 +8,11 @@ import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * An input stream that keeps track of our position and allows us to jump forward to a new "page" defined by a page size parameter
+ * @author daniel.watson
+ *
+ */
 public class XptInputStream extends BufferedInputStream {
 
 	protected static final Logger LOGGER = LoggerFactory.getLogger(XptInputStream.class);
@@ -26,23 +31,35 @@ public class XptInputStream extends BufferedInputStream {
 	}
 
 	public boolean nextPage() throws IOException {
-		int skip = pageSize - position%pageSize;
-		//LOGGER.info("skip: {}",skip);
-		long actual = skip(skip);
-		return actual > 0;
+		return nextPage(false);
+	}
+	
+	/**
+	 * Jumps to the next page if we are not at a page start
+	 * @param force forces the jump to happen even if we are at page start already
+	 * @return
+	 * @throws IOException
+	 */
+	public boolean nextPage(boolean force) throws IOException {
+		if(getPagePosition() != 0 || force) {
+			int skip = pageSize - position%pageSize;
+			long actual = skip(skip);
+			return actual > 0;
+		}
+		else return false;
 	}
 	
 	@Override
 	public synchronized int read() throws IOException {
 		int b = super.read();
-		if (b >= 0)position += 1;
+		if (b >= 0) position += 1;
 		return b;
 	}
 
 	@Override
 	public synchronized int read(byte[] b, int off, int len) throws IOException {
 		int n = super.read(b, off, len);
-		if (n > 0)position += n;
+		if (n > 0) position += n;
 		return n;
 	}
 	
@@ -52,6 +69,10 @@ public class XptInputStream extends BufferedInputStream {
 
 	public synchronized long getPageStart() {
 		return position - position%pageSize;
+	}
+	
+	public synchronized long getPagePosition() {
+		return position % pageSize;
 	}
 	
 	public boolean isHeader() throws IOException {
@@ -66,7 +87,9 @@ public class XptInputStream extends BufferedInputStream {
 	@Override
 	public synchronized long skip(long skip) throws IOException {
 		long n = super.skip(skip);
-		if (n > 0)position += n;
+		if (n > 0) {
+			position += n;
+		}
 		return n;
 	}
 

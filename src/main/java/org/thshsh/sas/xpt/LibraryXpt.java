@@ -13,19 +13,16 @@ import org.thshsh.sas.Dataset;
 
 public class LibraryXpt extends org.thshsh.sas.Library {
 	
+	public static final Logger LOGGER = LoggerFactory.getLogger(LibraryXpt.class);
+	
 	public static final String METADATA_CHARSET_NAME = "US-ASCII";
 	public static Charset METADATA_CHARSET = Charset.forName("US-ASCII");
-	
 	public static DateTimeFormatter DATE_TIME_FORMAT = new DateTimeFormatterBuilder()
             .parseCaseInsensitive()
             .appendPattern("ddMMMyy:HH:mm:ss")
             .toFormatter();
-	
-	
-	public static final Logger LOGGER = LoggerFactory.getLogger(LibraryXpt.class);
-	
+
 	protected LibraryHeaderXpt header;
-	
 	protected List<DatasetXpt> datasets;
 	
 	public LibraryXpt() {

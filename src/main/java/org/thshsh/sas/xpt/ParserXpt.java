@@ -6,12 +6,17 @@ import java.io.RandomAccessFile;
 import java.time.LocalDateTime;
 
 import org.apache.commons.io.input.RandomAccessFileInputStream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.thshsh.sas.SasConstants;
 import org.thshsh.struct.ByteOrder;
 import org.thshsh.struct.Struct;
 
 public class ParserXpt {
+	
+	private static final Logger LOGGER = LoggerFactory.getLogger(ParserXpt.class);
 
+	
 	public static LibraryXpt parseLibrary(File f) throws IOException {
 		return ParserXpt.parseLibrary(new RandomAccessFileInputStream(new RandomAccessFile(f, "r")));
 	}
@@ -29,11 +34,11 @@ public class ParserXpt {
 			LibraryXpt library = new LibraryXpt();
 			
 			Struct<LibraryHeaderXpt> s = Struct.create(LibraryHeaderXpt.class);
-			Struct<DatasetXpt> dsHeaderStruct = Struct.create(DatasetXpt.class);
+			Struct<DatasetHeaderXpt> dsHeaderStruct = Struct.create(DatasetHeaderXpt.class);
 	
 			library.header = s.unpackEntity(input);
 			
-			LibraryXpt.LOGGER.info("library header: {}",library.header);
+			LOGGER.info("library header: {}",library.header);
 			
 			boolean nextMember = false;
 			
@@ -45,61 +50,61 @@ public class ParserXpt {
 			do {
 	
 	
-				DatasetXpt dataset = dsHeaderStruct.unpackEntity(input);
+				DatasetHeaderXpt header = dsHeaderStruct.unpackEntity(input);
 				
-				LibraryXpt.LOGGER.info("dataset header: {}",dataset);
+				LOGGER.info("dataset header: {}",header);
+				
+				DatasetXpt dataset = new DatasetXpt(header);
 				
 				library.getDatasets().add(dataset);
 				
-				Struct<? extends VariableXpt> variableStruct = Struct.create((Class<? extends VariableXpt>)(dataset.getDescriptor140()?VariableXpt140.class:VariableXpt136.class)).byteOrder(ByteOrder.Big);
+				if(!header.getDescriptor140()) throw new IllegalStateException("using 136");
+				
+				Struct<? extends VariableXpt> variableStruct = Struct.create((Class<? extends VariableXpt>)(header.getDescriptor140()?VariableXpt140.class:VariableXpt136.class)).byteOrder(ByteOrder.Big);
 		
 	
-				for(int i=0;i<dataset.getVariableCount();i++) {
+				for(int i=0;i<header.getVariableCount();i++) {
 					VariableXpt var = variableStruct.unpackEntity(input);
-					LibraryXpt.LOGGER.info("variable: {}",var);
+					LOGGER.info("variable: {}",var);
 					dataset.getVariables().add(var);
 				}
 				
-				LibraryXpt.LOGGER.info("position: {}",input.getPosition());
+				LOGGER.info("position: {}",input.getPosition());
+				LOGGER.info("page position: {}",input.getPagePosition());
 				
 				SasConstants.debugBytes(input, 79);
 				//debugBytes(input, 40);
 				
-				//observation header will be on next page, so skip any padding after variables
+				//skip to the next page if we are not already there
 				input.nextPage();
 				
-				LibraryXpt.LOGGER.info("position after page: {}",input.getPosition());
-				LibraryXpt.LOGGER.info("searching for observations");
-				
-				//BufferedInputStream bis = new BufferedInputStream(input);
+				LOGGER.info("position after page: {}",input.getPosition());
+				LOGGER.info("searching for observations");
 				
 				SasConstants.debugBytes(input, 79);
-				//debugBytes(pis, 79);
-				
-				//TODO can we just search for the next non null byte?
-				//searchForBytes(input,ObservationsXptHeader.HEADER_STRING.getBytes(),true);
-				
+
+				//this page should be a header
 				if(!input.isHeader()) throw new IllegalStateException("Observation header not found");
 				
-				input.nextPage();
+				//force skip to the next page where observations should be
+				input.nextPage(true);
 				
-				//ObservationsXptHeader obs = obsHeaderStruct.unpackEntity(input);
-				//LOGGER.info("obs: {}",obs);
-				
+		
 				//dataset.observationStartByte = input.getRandomAccessFile().getFilePointer();
 				dataset.observationStartByte = input.getPosition();
-				LibraryXpt.LOGGER.info("observationStartByte: {}",dataset.observationStartByte);
+				LOGGER.info("observationStartByte: {}",dataset.observationStartByte);
 	
-				//now read pages until we find another header
+				//now skip all data pages until we find another header, which implies multiple datasets
 				
-				LibraryXpt.LOGGER.info("searching for next dataset");
+				LOGGER.info("searching for next dataset");
 	
+				//force skip pages until we fund another header
 				nextMember = input.isHeader();
-				while(!nextMember && input.nextPage()) {
+				while(!nextMember && input.nextPage(true)) {
 					nextMember = input.isHeader();
 				}
 			
-				LibraryXpt.LOGGER.info("nextMember: {}",nextMember);
+				LOGGER.info("nextMember: {}",nextMember);
 			
 			}
 			while(nextMember);
