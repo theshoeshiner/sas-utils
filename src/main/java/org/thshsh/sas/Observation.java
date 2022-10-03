@@ -35,11 +35,13 @@ public class Observation {
 	
 	public Object getFormattedValue(Variable vm) {
 		Object val = getValue(vm);
-		
-		if(vm.getType() == VariableType.Numeric) {
+		LOGGER.trace("getFormattedValue value: {}",val);
+		if(val == null) return null;
+		else if(vm.getType() == VariableType.Numeric) {
 			//val = ObservationIteratorXpt.ibm_to_ieee((byte[]) val);
 			if(vm.getFormat()!=null) {
 				switch(vm.getFormat().getType()) {
+					//TODO need to not show time zone for these since SAS doesnt show them either 
 					case DATE:
 					case YYMMDD:
 					case DDMMYY:
@@ -55,7 +57,7 @@ public class Observation {
 						break;
 					case NUMERIC:
 						break;
-					case JULIAN:
+					//case JULIAN:
 					default:
 						throw new IllegalArgumentException("Unhandled case");				
 				}

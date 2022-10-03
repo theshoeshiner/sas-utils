@@ -32,5 +32,19 @@ public abstract class Dataset {
 	public Stream<Observation> streamObservations(File file) throws IOException {
 		return streamObservations(new RandomAccessFileInputStream(new RandomAccessFile(file, "r")));
 	}
+
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("Dataset [getName()=");
+		builder.append(getName());
+		builder.append(", getLabel()=");
+		builder.append(getLabel());
+		builder.append(", getType()=");
+		builder.append(getType());
+		builder.append("]");
+		return builder.toString();
+	}
+	
 	
 }
