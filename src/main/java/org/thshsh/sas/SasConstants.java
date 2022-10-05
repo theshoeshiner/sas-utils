@@ -23,20 +23,20 @@ public class SasConstants {
 		input.mark(num);
 		byte[] bytes = new byte[num];
 		IOUtils.read(input, bytes);
-		LOGGER.info("Next {} Bytes String: '{}'",num,new String(bytes));
-		LOGGER.info("Next {} Bytes Hex: {}",num,Hex.encodeHexString(bytes));
+		LOGGER.debug("Next {} Bytes String: '{}'",num,new String(bytes));
+		LOGGER.debug("Next {} Bytes Hex: {}",num,Hex.encodeHexString(bytes));
 		//input.getRandomAccessFile().seek(mark);
 		input.reset();
 	
 	}
 
 	public static void debugBytes(RandomAccessFileInputStream input, int num) throws IOException {
-		LOGGER.info("Position: {}",input.getRandomAccessFile().getFilePointer());
+		LOGGER.debug("Position: {}",input.getRandomAccessFile().getFilePointer());
 		long mark = input.getRandomAccessFile().getFilePointer();
 		byte[] bytes = new byte[num];
 		IOUtils.read(input, bytes);
-		LOGGER.info("Next {} Bytes String: '{}'",num,new String(bytes));
-		LOGGER.info("Next {} Bytes Hex: {}",num,Hex.encodeHexString(bytes));
+		LOGGER.debug("Next {} Bytes String: '{}'",num,new String(bytes));
+		LOGGER.debug("Next {} Bytes Hex: {}",num,Hex.encodeHexString(bytes));
 		input.getRandomAccessFile().seek(mark);
 		
 		
