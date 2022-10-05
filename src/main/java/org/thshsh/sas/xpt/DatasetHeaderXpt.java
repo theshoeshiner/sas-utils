@@ -54,6 +54,7 @@ public class DatasetHeaderXpt  {
 	@StructToken(order=9,length=40)
 	public String label;
 	
+	//have only ever seen blank
 	@StructToken(order=10,length=8)
 	public String type;
 
@@ -61,7 +62,7 @@ public class DatasetHeaderXpt  {
 	@StructTokenPrefix({@StructToken(type=TokenType.String,constant = VARIABLES_HEADER_STRING)})
 	@StructToken(order=12,length=4)
 	@StructTokenSuffix({@StructToken(type = TokenType.String,constant = VARIABLES_FOOTER)})
-	public String variableCount;
+	public String variableCountString;
 	
 	
 	
@@ -131,8 +132,12 @@ public class DatasetHeaderXpt  {
 		this.type = type;
 	}
 
+	public String getVariableCountString() {
+		return variableCountString;
+	}
+
 	public Integer getVariableCount() {
-		return Integer.valueOf(variableCount);
+		return Integer.valueOf(variableCountString);
 	}
 	
 	public Boolean getDescriptor140() {
@@ -147,7 +152,7 @@ public class DatasetHeaderXpt  {
 		StringBuilder builder = new StringBuilder();
 		builder.append("DatasetXpt [");
 	
-		builder.append("descriptorSizeString=");
+		builder.append("variableDescriptorSize=");
 		builder.append(variableDescriptorSize);
 		builder.append(", name=");
 		builder.append(name);
@@ -164,7 +169,7 @@ public class DatasetHeaderXpt  {
 		builder.append(", type=");
 		builder.append(type);
 		builder.append(", variableCount=");
-		builder.append(variableCount);
+		builder.append(variableCountString);
 		builder.append("]");
 		return builder.toString();
 	}
