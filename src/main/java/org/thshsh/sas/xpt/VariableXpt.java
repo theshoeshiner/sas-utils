@@ -25,6 +25,9 @@ public class VariableXpt extends Variable {
 	@StructToken(order = 2)
 	public Short length;
 	
+	/**
+	 * The index of this variable (starts at 1)
+	 */
 	@StructToken(order = 3)
 	public Short number;
 	
@@ -45,7 +48,7 @@ public class VariableXpt extends Variable {
 	
 	@StructToken(order = 9)
 	@StructTokenSuffix({@StructToken(type = TokenType.Bytes,constant = "0000")}) //2 empty byte suffix
-	public Short formatJustifyId;
+	public Short formatJustifyId; //always zero
 	
 	@StructToken(order = 11,length = 8)
 	public String informatTypeString;
@@ -56,6 +59,9 @@ public class VariableXpt extends Variable {
 	@StructToken(order = 13)
 	public Short imformatDecimals;
 	
+	/**
+	 * the byte position of this variable in the observation block
+	 */
 	@StructToken(order = 14)
 	@StructTokenSuffix({@StructToken(type = TokenType.Bytes,constant = "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000")})
 	public Integer position;
@@ -190,6 +196,8 @@ public class VariableXpt extends Variable {
 		builder.append(name);
 		builder.append(", length=");
 		builder.append(length);
+		builder.append(", nameHash=");
+		builder.append(nameHash);
 		builder.append(", number=");
 		builder.append(number);
 		builder.append(", label=");
