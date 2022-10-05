@@ -10,14 +10,21 @@ import org.thshsh.struct.TokenType;
 public class LibraryHeaderXpt {
 
 
-	public static final String HEADER = XptConstants.HEADER_TAG+"LIBRARY HEADER RECORD!!!!!!!000000000000000000000000000000  SAS     SAS     SASLIB  ";
+	public static final String HEADER_1 = XptConstants.HEADER_TAG + "LIBRARY HEADER RECORD!!!!!!!000000000000000000000000000000  ";
+	public static final String HEADER_2 = "SAS     ";
+	public static final String HEADER_3 = "SASLIB  ";
 	
-	@StructTokenPrefix({@StructToken(type=TokenType.String,constant = HEADER)})
+	@StructTokenPrefix({
+		@StructToken(type=TokenType.String,constant = HEADER_1),
+		@StructToken(type=TokenType.String,constant = HEADER_2),
+		@StructToken(type=TokenType.String,constant = HEADER_2),
+		@StructToken(type=TokenType.String,constant = HEADER_3),
+		})
 	@StructToken(order=1,length=8)
 	public String version;
 	
 	@StructToken(order=2,length=8)
-	@StructTokenSuffix({@StructToken(type = TokenType.String,constant = XptConstants.SPACES_24)})
+	@StructTokenSuffix({@StructToken(type = TokenType.String,constant = XptConstants.SPACES_24)}) 
 	public String os;
 	
 	@StructToken(order=3,length=16)
@@ -25,6 +32,18 @@ public class LibraryHeaderXpt {
 	
 	@StructToken(order=4,length=16)
 	public String modifiedString;
+	
+
+	public String getVersion() {
+		return version;
+	}
+
+
+	public void setVersion(String version) {
+		this.version = version;
+	}
+
+
 
 	@Override
 	public String toString() {
