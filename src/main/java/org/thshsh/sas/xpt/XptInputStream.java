@@ -76,10 +76,15 @@ public class XptInputStream extends BufferedInputStream {
 	}
 	
 	public boolean isHeader() throws IOException {
+		return isHeader(null);
+	}
+	
+	public boolean isHeader(String type) throws IOException {
 		mark(pageSize);
-		byte[] buffer = new byte[XptConstants.HEADER_TAG.length()];
+		String string = XptConstants.HEADER_TAG + (type != null ? type : "");
+		byte[] buffer = new byte[string.length()];
 		this.read(buffer);
-		boolean found = Arrays.equals(buffer, XptConstants.HEADER_TAG.getBytes());
+		boolean found = Arrays.equals(buffer, string.getBytes());
 		reset();
 		return found;
 	}
