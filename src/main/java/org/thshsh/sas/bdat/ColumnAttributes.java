@@ -6,18 +6,12 @@ import org.thshsh.struct.StructToken;
 import org.thshsh.struct.StructTokenSuffix;
 import org.thshsh.struct.TokenType;
 
-public class ColumnAttributes {
+public abstract class ColumnAttributes {
 	
 	public static final Struct<ColumnAttributes> STRUCT = Struct.create(ColumnAttributes.class);
 	
-	@StructToken(order=0)
-	public Integer offset;
-	
 	@StructToken(order=1)
 	public Integer width;
-	
-	/*	@StructToken(order=2)
-		public Integer length;*/
 	
 	@StructToken(order=3) 
 	public Short nameLengthId;
@@ -43,12 +37,15 @@ public class ColumnAttributes {
 	public void setSkip2(Byte skip2) {
 		this.skip2 = skip2;
 	}*/
+	
+	
+	public abstract Long getOffset();
 
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
 		builder.append("ColumnAttributes [offset=");
-		builder.append(offset);
+		builder.append(getOffset());
 		builder.append(", width=");
 		builder.append(width);
 		builder.append(", nameLengthId=");

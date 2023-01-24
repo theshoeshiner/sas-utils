@@ -25,6 +25,7 @@ public class ObservationIteratorXpt implements Iterator<Observation> {
 	public static final String CHARSET = "ISO-8859-1";
 	public static final byte SENTINEL = ' ';
 	public static final char NO_VALUE = '.';
+	//IBM numeric values are big endian unsigned longs
 	public static final Struct<?> IBM = Struct.create(">Q");
 	
 	protected int observationSize = 0;
@@ -134,7 +135,8 @@ public class ObservationIteratorXpt implements Iterator<Observation> {
 			else if(bytes[0] == NO_VALUE) return null;
 			//TODO figure out how to handle missing characters in a more generic way
 			//this code would work for numeric values, but there is no way to know for certain
-			//if a character value represented a MissingValue or just actual text
+			//if a character value represented a MissingValue or just actual text without the 
+			//user specifying the collection of valid missing value chars
 			else if((mv =  MissingValue.fromCharacter((char) bytes[0])) != null) return null;
 			else throw new IllegalArgumentException("Zero Mantissa Value was not readable");
 		}

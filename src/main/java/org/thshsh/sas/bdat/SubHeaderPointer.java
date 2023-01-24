@@ -2,18 +2,12 @@ package org.thshsh.sas.bdat;
 
 import org.thshsh.struct.Struct;
 import org.thshsh.struct.StructToken;
-import org.thshsh.struct.StructTokenSuffix;
-import org.thshsh.struct.TokenType;
 
-public class SubHeaderPointer {
+public abstract class SubHeaderPointer {
 	
 	public static final Struct<SubHeaderPointer> STRUCT = Struct.create(SubHeaderPointer.class);
 	
-	@StructToken(order=0) //TODO long when 64
-	public Integer pageOffset;
 	
-	@StructToken(order=1)
-	public Integer length; //TODO long when 64
 
 	
 	//protected byte[] prefix;
@@ -22,34 +16,41 @@ public class SubHeaderPointer {
 	public Byte compressionTypeId; //0=none,1=truncated(ignore data),4= compressed row data with control byte
 	
 	
+	
+	
 	/**
 	 * 0 Row Size, Column Size, Subheader Counts, Column Format and Label, in Uncompressed file
 		1 Column Text, Column Names, Column Attributes, Column List
 		1 all subheaders (including row data), in Compressed file.
 	 */
 	@StructToken(order=3)
-	@StructTokenSuffix({@StructToken(type = TokenType.Bytes,constant = "0000",validate = false)}) //TODO 6 bytes when 64
+	//@StructTokenSuffix({@StructToken(type = TokenType.Bytes,constant = "0000",validate = false)}) //TODO 6 bytes when 64
 	public Byte categoryId;
 	
 	public SubHeaderSignature signature;
 
 	public SubHeader subHeader;
 	
-	public Integer getPageOffset() {
+	
+	public abstract Long getPageOffset();
+	
+	public abstract Long getLength();
+	
+	/*public Integer getPageOffset() {
 		return pageOffset;
 	}
-
+	
 	public void setPageOffset(Integer offset) {
 		this.pageOffset = offset;
 	}
-
+	
 	public Integer getLength() {
 		return length;
 	}
-
+	
 	public void setLength(Integer length) {
 		this.length = length;
-	}
+	}*/
 
 	public Byte getCompressionTypeId() {
 		return compressionTypeId;
@@ -110,9 +111,9 @@ public class SubHeaderPointer {
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
 		builder.append("SubHeaderPointer [pageOffset=");
-		builder.append(pageOffset);
+		builder.append(getPageOffset());
 		builder.append(", length=");
-		builder.append(length);
+		builder.append(getLength());
 		builder.append(", compressionTypeId=");
 		builder.append(compressionTypeId);
 		builder.append(", categoryId=");

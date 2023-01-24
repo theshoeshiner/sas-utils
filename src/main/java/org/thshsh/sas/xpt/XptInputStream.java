@@ -17,9 +17,15 @@ public class XptInputStream extends BufferedInputStream {
 
 	protected static final Logger LOGGER = LoggerFactory.getLogger(XptInputStream.class);
 
+	public static final int DEFAULT_PAGE_SIZE = 80;
+	
 	protected int pageSize;
 	protected int position;
 	protected int mark;
+	
+	public XptInputStream(InputStream in) {
+		this(in,DEFAULT_PAGE_SIZE);
+	}
 
 	public XptInputStream(InputStream in, int size) {
 		super(in,size);

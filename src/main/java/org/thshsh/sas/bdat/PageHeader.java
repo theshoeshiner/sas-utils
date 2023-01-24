@@ -1,25 +1,24 @@
 package org.thshsh.sas.bdat;
 
-import org.thshsh.struct.Struct;
 import org.thshsh.struct.StructToken;
 import org.thshsh.struct.StructTokenSuffix;
 import org.thshsh.struct.TokenType;
 
-public class PageHeader {
+public abstract class PageHeader {
 	
-	public static final Struct<PageHeader> STRUCT = Struct.create(PageHeader.class);
+	//public static final Struct<PageHeader> STRUCT = Struct.create(PageHeader.class);
 	
 	@StructToken(order = 0)
-	@StructTokenSuffix({@StructToken(type = TokenType.Bytes,constant = "000000000000000000000000",validate = false)}) //TODO needs to be 24 bytes for 64bit
+	//@StructTokenSuffix({@StructToken(type = TokenType.Bytes,constant = "000000000000000000000000",validate = false)}) //TODO needs to be 24 bytes for 64bit
 	public Integer pageSequence;
 	
-	@StructToken(order = 1)
+	@StructToken(order = 10)
 	protected Short pageTypeId;
 	
-	@StructToken(order = 2)
+	@StructToken(order = 20)
 	protected Short blockCount;
 	
-	@StructToken(order = 3)
+	@StructToken(order = 30)
 	@StructTokenSuffix({@StructToken(type = TokenType.Bytes,constant = "0000",validate = false)}) 
 	protected Short subHeaderCount;
 	
@@ -74,8 +73,8 @@ public class PageHeader {
 		builder.append(blockCount);
 		builder.append(", subHeaderCount=");
 		builder.append(subHeaderCount);
-		builder.append(", getPageType()=");
-		builder.append(getPageType());
+		//builder.append(", getPageType()=");
+		//builder.append(getPageType());
 		builder.append("]");
 		return builder.toString();
 	}

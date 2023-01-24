@@ -1,7 +1,6 @@
 package org.thshsh.sas.xpt;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Spliterator;
@@ -16,15 +15,15 @@ import org.thshsh.sas.Variable;
 
 public class DatasetXpt extends Dataset {
 
+	//protected LibraryXpt library;
 	protected DatasetHeaderXpt header;
-	
 	protected List<VariableXpt> variables;
-	
 	protected long observationStartByte;
 
-	public DatasetXpt(DatasetHeaderXpt header) {
-		super();
+	public DatasetXpt(LibraryXpt lib,DatasetHeaderXpt header) {
+		super(lib);
 		this.header = header;
+		//this.library = lib;
 	}
 
 	public String getName() {
@@ -70,12 +69,28 @@ public class DatasetXpt extends Dataset {
 		this.observationStartByte = observationStartByte;
 	}
 
-	public Stream<Observation> streamObservations(RandomAccessFileInputStream cs) throws IOException {
-		return streamObservations(this, cs);
+	@Override
+	public LocalDateTime getModified() {
+		return header.getModified();
 	}
-	
-	public static Stream<Observation> streamObservations(DatasetXpt member, InputStream is) {
-		Stream<Observation> stream= StreamSupport.stream(Spliterators.spliteratorUnknownSize(new ObservationIteratorXpt(member, is),Spliterator.NONNULL), false);
+
+	@Override
+	public LocalDateTime getCreated() {
+		return header.getCreated();
+	}
+
+	protected Stream<Observation> createObservationStream(RandomAccessFileInputStream is) {
+		Stream<Observation> stream= StreamSupport.stream(Spliterators.spliteratorUnknownSize(new ObservationIteratorXpt(this, is),Spliterator.NONNULL), false);
 		return stream;
+	}
+
+	@Override
+	public LibraryXpt getLibrary() {
+		return (LibraryXpt) super.getLibrary();
+	}
+
+	@Override
+	public Long getRowCount() {
+		throw new UnsupportedOperationException();
 	}
 }

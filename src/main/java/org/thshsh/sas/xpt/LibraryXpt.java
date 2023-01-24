@@ -1,5 +1,6 @@
 package org.thshsh.sas.xpt;
 
+import java.io.File;
 import java.nio.charset.Charset;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -24,12 +25,11 @@ public class LibraryXpt extends org.thshsh.sas.Library {
 
 	protected LibraryHeaderXpt header;
 	protected List<DatasetXpt> datasets;
+
 	
-	public LibraryXpt() {
-		super();
+	public LibraryXpt(File file) {
+		super(file);
 	}
-	
-	
 
 
 	public LibraryHeaderXpt getHeader() {
@@ -61,9 +61,10 @@ public class LibraryXpt extends org.thshsh.sas.Library {
 	}
 
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public void setDatasets(List<? extends Dataset> ds) {
-		this.datasets = (List<DatasetXpt>)datasets;
+		this.datasets = (List<DatasetXpt>)ds;
 		
 	}
 	

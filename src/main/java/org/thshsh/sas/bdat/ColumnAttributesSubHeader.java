@@ -8,7 +8,7 @@ import org.thshsh.struct.StructToken;
 import org.thshsh.struct.StructTokenSuffix;
 import org.thshsh.struct.TokenType;
 
-public class ColumnAttributesSubHeader extends SubHeader{
+public class ColumnAttributesSubHeader extends SubHeader {
 	
 	public static final Struct<ColumnAttributesSubHeader> STRUCT = Struct.create(ColumnAttributesSubHeader.class);
 	
@@ -29,6 +29,12 @@ public class ColumnAttributesSubHeader extends SubHeader{
 
 	public void setColumnAttributes(List<ColumnAttributes> columnNames) {
 		this.columnAttributes = columnNames;
+	}
+	
+	public int getNumColumnAttributes() {
+		long size = pointer.getLength() - ((STRUCT.byteCount()+dataset.header1.getIntegerTokenType().size()) + (dataset.get64Bit()?12:8));
+		int count = (int)size / ColumnAttributes.STRUCT.byteCount();
+		return count;
 	}
 
 	@Override

@@ -48,6 +48,11 @@ public class VariableBdat extends Variable {
 		// TODO Auto-generated method stub
 		return null;
 	}
+
+	@Override
+	public String getLabel() {
+		return formatAndLabel.getLabel();
+	}
 	
 	
 }

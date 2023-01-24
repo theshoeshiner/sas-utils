@@ -1,131 +1,126 @@
 package org.thshsh.sas.bdat;
 
-import org.thshsh.struct.Struct;
-import org.thshsh.struct.StructEntity;
+import java.time.LocalDateTime;
+
+import org.thshsh.sas.SasConstants;
 import org.thshsh.struct.StructToken;
-import org.thshsh.struct.StructTokenPrefix;
 import org.thshsh.struct.StructTokenSuffix;
 import org.thshsh.struct.TokenType;
 
-@StructEntity(trimAndPad=true)
-public class Header3 {
-	
-	public static final Struct<Header3> STRUCT = Struct.create(Header3.class);
+public abstract class Header3 {
 
-	/*@StructToken(order = 1,length = 8)
-	public String skip;*/
+	@StructToken(order = 1)
+	public Double createdTimestamp;
 	
-	@StructTokenPrefix({@StructToken(type = TokenType.Bytes,constant = "0000000000000000",validate = false)})
-	@StructToken(order = 2,length = 8)
-	public String sasRelease;
+	@StructToken(order = 2)
+	@StructTokenSuffix({@StructToken(type = TokenType.Bytes,constant = "00000000000000000000000000000000",validate = false)})
+	public Double modifiedTimestamp;
 	
-	@StructToken(order = 3,length = 16)
-	public String sasServer;
+	@StructToken(order = 4)
+	public Integer headerSize;
 	
-	@StructToken(order = 4,length = 16)
-	public String osVersion;
+	@StructToken(order = 5)
+	public Integer pageSize;
 	
-	@StructToken(order = 5,length = 16)
-	public String osVendor;
-	
-	@StructToken(order = 6,length = 16)
-	@StructTokenSuffix({
-			@StructToken(type = TokenType.Bytes,constant = "0000000000000000000000000000000000000000000000000000000000000000",validate = false),
-			@StructToken(type = TokenType.Bytes,constant = "00000000",validate = false) //TODO int, page sequence signature? (value is close to the value at start of each Page	Offset Table)
-	})
-	public String osName;
-	
-	
-	@StructToken(order = 7)
-	public Double timestamp;
 
-	/*public String getSkip() {
+	public Header3() {}
+	
+	
+	public Double getCreatedTimestamp() {
+		return createdTimestamp;
+	}
+
+
+
+	public void setCreatedTimestamp(Double created) {
+		this.createdTimestamp = created;
+	}
+
+
+
+	public Double getModifiedTimestamp() {
+		return modifiedTimestamp;
+	}
+
+
+
+	public void setModifiedTimestamp(Double modified) {
+		this.modifiedTimestamp = modified;
+	}
+
+
+
+	/*public byte[] getSkip() {
 		return skip;
 	}
 	
 	
 	
-	public void setSkip(String skip) {
+	public void setSkip(byte[] skip) {
 		this.skip = skip;
+	}
+	*/
+
+
+	public Integer getHeaderSize() {
+		return headerSize;
+	}
+
+
+
+	public void setHeaderSize(Integer headerSize) {
+		this.headerSize = headerSize;
+	}
+
+
+
+	public Integer getPageSize() {
+		return pageSize;
+	}
+
+
+
+	public void setPageSize(Integer pageSize) {
+		this.pageSize = pageSize;
+	}
+
+	public abstract Long getPageCount();
+
+	/*public Integer getPageCount() {
+		return pageCount;
+	}
+	
+	
+	
+	public void setPageCount(Integer pageCount) {
+		this.pageCount = pageCount;
 	}*/
 
 
-
-	public String getSasRelease() {
-		return sasRelease;
+	public LocalDateTime getCreated() {
+		return SasConstants.toDateTime(createdTimestamp);
+	}
+	
+	public LocalDateTime getModified() {
+		return SasConstants.toDateTime(modifiedTimestamp);
 	}
 
 
 
-	public void setSasRelease(String sasRelease) {
-		this.sasRelease = sasRelease;
-	}
-
-
-
-	public String getSasServer() {
-		return sasServer;
-	}
-
-
-
-	public void setSasServer(String sasServer) {
-		this.sasServer = sasServer;
-	}
-
-
-
-	public String getOsVersion() {
-		return osVersion;
-	}
-
-
-
-	public void setOsVersion(String osVersion) {
-		this.osVersion = osVersion;
-	}
-
-
-
-	public String getOsVendor() {
-		return osVendor;
-	}
-
-
-
-	public void setOsVendor(String osVendor) {
-		this.osVendor = osVendor;
-	}
-
-
-
-	public String getOsName() {
-		return osName;
-	}
-
-
-
-	public void setOsName(String osName) {
-		this.osName = osName;
-	}
-
-
-
+	
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
-		builder.append("Header3 [sasRelease=");
-		builder.append(sasRelease);
-		builder.append(", sasServer=");
-		builder.append(sasServer);
-		builder.append(", osVersion=");
-		builder.append(osVersion);
-		builder.append(", osVendor=");
-		builder.append(osVendor);
-		builder.append(", osName=");
-		builder.append(osName);
-		builder.append(", timestamp=");
-		builder.append(timestamp);
+		builder.append("Header3 [created=");
+		builder.append(getCreated());
+		builder.append(", modified=");
+		builder.append(getModified());
+		builder.append(", headerSize=");
+		builder.append(headerSize);
+		builder.append(", pageSize=");
+		builder.append(pageSize);
+		builder.append(", pageCount=");
+		builder.append(getPageCount());
 		builder.append("]");
 		return builder.toString();
 	}

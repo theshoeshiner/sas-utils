@@ -64,7 +64,7 @@ public class ObservationIteratorBdat implements Iterator<Observation> {
 	@SuppressWarnings("unchecked")
 	protected void nextPage() {
 		Page currentPage = pageIterator.next();
-		LOGGER.info("nextPage: {}",currentPage);
+		LOGGER.debug("nextPage: {}",currentPage);
 		DataSubHeaderIterator dshi = new DataSubHeaderIterator(dataset, currentPage, stream);
 		DataBlockIterator dbi = new DataBlockIterator(dataset,currentPage,stream);
 		currentPageObservationIterator = IteratorUtils.chainedIterator(dshi, dbi);
@@ -74,8 +74,7 @@ public class ObservationIteratorBdat implements Iterator<Observation> {
 	
 	public static Observation readRowFromStream(DatasetBdat member, RandomAccessFileInputStream stream, Integer rowDataLength) throws IOException {
 		
-		LOGGER.info("readRowFromStream comp: {}",member.getCompression());
-		
+
 		byte[] rowBytes = new byte[rowDataLength];
 		IOUtils.readFully(stream, rowBytes);
 		
@@ -94,9 +93,11 @@ public class ObservationIteratorBdat implements Iterator<Observation> {
 					throw new IllegalArgumentException("Compression unknown");
 				}
 				
-				LOGGER.info("decompressing data using: {}",compressor);
+				LOGGER.debug("decompressing data using: {}",compressor);
 				
-				rowBytes = compressor.decompressRow(member.getRowLength(), rowBytes);
+				
+				
+				rowBytes = compressor.decompressRow(Math.toIntExact(member.getRowLength()), rowBytes);
 			}
 			else {
 				throw new IllegalArgumentException("Row data length ("+rowDataLength+") should equal dataset row length ("+member.getRowLength()+") for uncompressed files");
@@ -114,17 +115,19 @@ public class ObservationIteratorBdat implements Iterator<Observation> {
 		
 		for(VariableBdat var : member.getVariables()) {
 			
-			//LOGGER.info("Variable: {}",var);
-			//buffer.position(var.attributes.offset.intValue());
 			rowStream.reset();
-			//row.skip(currentBlock)
 			
 			Object value;
 			Integer length = var.getLength();
 			VariableType type =  var.getType();
 			
+			LOGGER.debug("var offset: {}",var.attributes.getOffset());
+			LOGGER.debug("length: {}",length);
+			
 			//skip to proper offset
-			IOUtils.skipFully(rowStream, var.attributes.offset.longValue());
+			IOUtils.skipFully(rowStream, var.attributes.getOffset());
+			
+			LOGGER.debug("type: {}",type);
 			
 			switch(type) {
 			
@@ -161,7 +164,7 @@ public class ObservationIteratorBdat implements Iterator<Observation> {
 			
 			}
 			
-			LOGGER.info("Value: {} for Variable: {}",value,var);			
+			LOGGER.debug("Value: {} for Variable: {}",value,var);			
 			
 			currentObservation.putValue(var, value);
 			
@@ -180,8 +183,8 @@ public class ObservationIteratorBdat implements Iterator<Observation> {
 		protected DatasetBdat dataset;
 		protected Page page;
 		protected RandomAccessFileInputStream stream;
-		protected Integer blockCount;
-		protected Integer blockIndex = 0;
+		protected Long blockCount;
+		protected Long blockIndex = 0l;
 		
 		Observation currentObservation;
 		
@@ -206,14 +209,14 @@ public class ObservationIteratorBdat implements Iterator<Observation> {
 				
 				stream.getRandomAccessFile().seek(
 						page.startByte + 
-						PageHeader.STRUCT.byteCount() + 
-						(SubHeaderPointer.STRUCT.byteCount() * page.getSubHeaderCount()) +
-						(dataset.rowSizeSubHeader.rowLength.intValue() * blockIndex)
+						dataset.getPageHeaderStruct().byteCount() + 
+						(dataset.getSubHeaderPointerStruct().byteCount() * page.getSubHeaderCount()) +
+						(dataset.rowSizeSubHeader.getRowLength().intValue() * blockIndex)
 						);
 				
-				LOGGER.info("next block: {}",blockIndex);
+				LOGGER.debug("next block: {}",blockIndex);
 				
-				currentObservation = readRowFromStream(dataset, stream,dataset.getRowLength());
+				currentObservation = readRowFromStream(dataset, stream,Math.toIntExact(dataset.getRowLength()));
 				blockIndex++;
 				return currentObservation;
 			} catch (IOException e) {
@@ -254,9 +257,9 @@ public class ObservationIteratorBdat implements Iterator<Observation> {
 				SubHeaderPointer pointer = dataSubHeadersIterator.next();
 				stream.getRandomAccessFile().seek(page.startByte + pointer.getPageOffset());
 		
-				LOGGER.info("reading row from subheader: {}",pointer);
+				LOGGER.debug("reading row from subheader: {}",pointer);
 				
-				return readRowFromStream(dataset, stream,pointer.length);
+				return readRowFromStream(dataset, stream,Math.toIntExact(pointer.getLength()));
 				
 			} 
 			catch (IOException e) {

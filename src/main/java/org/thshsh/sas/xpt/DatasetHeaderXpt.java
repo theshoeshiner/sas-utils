@@ -1,5 +1,7 @@
 package org.thshsh.sas.xpt;
 
+import java.time.LocalDateTime;
+
 import org.thshsh.struct.StructEntity;
 import org.thshsh.struct.StructToken;
 import org.thshsh.struct.StructTokenPrefix;
@@ -144,8 +146,14 @@ public class DatasetHeaderXpt  {
 		return Integer.valueOf(variableDescriptorSize).equals(140);
 	}
 	
-	
 
+	public LocalDateTime getModified() {
+		return ParserXpt.parseDateTime(modifiedString);
+	}
+
+	public LocalDateTime getCreated() {
+		return ParserXpt.parseDateTime(createdString);
+	}
 	
 	@Override
 	public String toString() {

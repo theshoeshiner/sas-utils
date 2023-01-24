@@ -2,36 +2,28 @@ package org.thshsh.sas.xpt;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.time.LocalDateTime;
 
-import org.apache.commons.io.input.RandomAccessFileInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.thshsh.sas.Parser;
 import org.thshsh.sas.SasConstants;
 import org.thshsh.struct.ByteOrder;
 import org.thshsh.struct.Struct;
 
-public class ParserXpt {
+public class ParserXpt implements Parser {
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(ParserXpt.class);
 
-	
-	public static LibraryXpt parseLibrary(File f) throws IOException {
-		return ParserXpt.parseLibrary(new RandomAccessFileInputStream(new RandomAccessFile(f, "r")));
-	}
+	public static final String STANDARD_EXTENSION = "xpt";
 
-	public static LibraryXpt parseLibrary(RandomAccessFileInputStream rafi) throws IOException {
+	public LibraryXpt parseLibrary(File file) throws IOException {
 	
+		LibraryXpt library = new LibraryXpt(file);
 		
-		XptInputStream input = new XptInputStream(rafi, 80);
-		
+		XptInputStream input = new XptInputStream(library.getRandomAccessFileInputStream(), 80);
+
 		try {
-			
-			
-			
-		
-			LibraryXpt library = new LibraryXpt();
 			
 			Struct<LibraryHeaderXpt> s = Struct.create(LibraryHeaderXpt.class);
 			Struct<DatasetHeaderXpt> dsHeaderStruct = Struct.create(DatasetHeaderXpt.class);
@@ -54,7 +46,7 @@ public class ParserXpt {
 				
 				LOGGER.info("dataset header: {}",header);
 				
-				DatasetXpt dataset = new DatasetXpt(header);
+				DatasetXpt dataset = new DatasetXpt(library,header);
 				
 				library.getDatasets().add(dataset);
 				
@@ -78,8 +70,8 @@ public class ParserXpt {
 				//skip to the next page if we are not already there
 				input.nextPage();
 				
-				LOGGER.info("position after page: {}",input.getPosition());
-				LOGGER.info("searching for observations");
+				LOGGER.debug("position after page: {}",input.getPosition());
+				LOGGER.debug("searching for observations");
 				
 				SasConstants.debugBytes(input, 79);
 
@@ -92,11 +84,14 @@ public class ParserXpt {
 		
 				//dataset.observationStartByte = input.getRandomAccessFile().getFilePointer();
 				dataset.observationStartByte = input.getPosition();
-				LOGGER.info("observationStartByte: {}",dataset.observationStartByte);
+				LOGGER.debug("observationStartByte: {}",dataset.observationStartByte);
 	
 				//now skip all data pages until we find another header, which implies multiple datasets
 				
-				LOGGER.info("searching for next dataset");
+				//check for labelheader
+				
+				
+				LOGGER.debug("searching for next dataset");
 	
 				//force skip pages until we fund another header
 				nextMember = input.isHeader();
@@ -175,31 +170,7 @@ public class ParserXpt {
 		}
 	}
 
-	/**
-	 * Searches an array for a sub array, up to the index specified by length, and returns the index where the found match begins
-	 * @param array
-	 * @param length
-	 * @param find
-	 * @return
-	 */
-	/*public static int contains(int length, byte[] find,byte[]... arrays ) {
-		int matchIndex = 0;
 	
-		int i=0;
-		for(byte[] array : arrays) {
-			for(byte b : array) {
-				if(b == find[matchIndex]) matchIndex++;
-				else matchIndex = 0;
-				if(matchIndex == find.length) {
-					return i-find.length+1;
-				}
-				i++;
-				if(i==length) return -1;
-			}
-		}
-		
-		return -1;
-	}*/
 	
 	public static LocalDateTime parseDateTime(String s) {
 		return LocalDateTime.from(LibraryXpt.DATE_TIME_FORMAT.parse(s));

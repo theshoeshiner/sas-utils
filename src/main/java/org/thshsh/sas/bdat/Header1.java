@@ -12,14 +12,12 @@ public class Header1 {
 	
 	public static final Struct<Header1> STRUCT = Struct.create(Header1.class);
 
-	static byte U64_BYTE_CHECKER_VALUE = 51;
-	
-	static byte ALIGN_1_CHECKER_VALUE = 51;
+	static byte ALIGN_CHECKER_VALUE = 51;
 
 	static int ALIGN_1_DEFAULT = 4;
 	static int ALIGN_2_DEFAULT = 4;
 	
-	@StructTokenPrefix({@StructToken(type = TokenType.Bytes,validate=false,constant = "000000000000000000000000c2ea8160b31411cfbd92080009c7318c181f1011")})
+	@StructTokenPrefix({@StructToken(type = TokenType.Bytes,constant = "000000000000000000000000c2ea8160b31411cfbd92080009c7318c181f1011")})
 	@StructToken(order=1)
 	@StructTokenSuffix({@StructToken(type = TokenType.Bytes,constant = "0000",validate = false)})
 	public Byte align1;
@@ -35,28 +33,7 @@ public class Header1 {
 	public Boolean littleEndian;
 	
 
-	@StructToken(order=7,length = 1)
-	@StructTokenSuffix({
-		@StructToken(type = TokenType.Bytes,constant = "0000000000000000",validate = false),
-		@StructToken(type = TokenType.Bytes,constant = "0000000000000000",validate = false),
-		@StructToken(type = TokenType.Bytes,constant = "0000000000000000",validate = false), //supposedly a repeat of first 8 bytes
-		@StructToken(type = TokenType.Bytes,constant = "000000000000",validate = false)
-		})
-	public String platform;
 	
-
-	@StructToken(order = 8)
-	@StructTokenSuffix({
-		@StructToken(type = TokenType.Bytes,constant = "000000000000000000000000",validate = false),
-		@StructToken(type = TokenType.String,constant = "SAS FILE")
-	})
-	public Short encoding;
-	
-	@StructToken(order=9,length = 64)
-	public String datasetName;
-	
-	@StructToken(order=10,length = 8)
-	public String fileType;
 	
 	
 
@@ -85,34 +62,18 @@ public class Header1 {
 		this.littleEndian = littleEndian;
 	}
 
-	public String getPlatform() {
-		return platform;
+	/*public ByteOrder getByteOrder() {
+		return littleEndian?ByteOrder.LITTLE_ENDIAN:ByteOrder.BIG_ENDIAN;
+	}*/
+	
+	public org.thshsh.struct.ByteOrder getByteOrder() {
+		return littleEndian?org.thshsh.struct.ByteOrder.Little:org.thshsh.struct.ByteOrder.Big;
 	}
-
-	public void setPlatform(String platform) {
-		this.platform = platform;
-	}
-
-
-	public String getDatasetName() {
-		return datasetName;
-	}
-
-	public void setDatasetName(String datasetName) {
-		this.datasetName = datasetName;
-	}
-
-	public String getFileType() {
-		return fileType;
-	}
-
-	public void setFileType(String fileType) {
-		this.fileType = fileType;
-	}
-
+	
+	
 
 	public Boolean get64Bit() {
-		return align1 == U64_BYTE_CHECKER_VALUE;
+		return align1 == ALIGN_CHECKER_VALUE;
 	}
 	
 	public Integer getIntegerLength() {
@@ -120,11 +81,11 @@ public class Header1 {
 	}
 
 	public int getHeader1Padding() {
-		return (align2 == ALIGN_1_CHECKER_VALUE) ? ALIGN_1_DEFAULT : 0;
+		return (align2 == ALIGN_CHECKER_VALUE) ? ALIGN_1_DEFAULT : 0;
 	}
 
 	public int getHeader2Padding() {
-		return (align1 == U64_BYTE_CHECKER_VALUE) ? ALIGN_2_DEFAULT : 0;
+		return (align1 == ALIGN_CHECKER_VALUE) ? ALIGN_2_DEFAULT : 0;
 	}
 	
 	public int getSubHeaderPointerLength() {
@@ -144,19 +105,12 @@ public class Header1 {
 		builder.append(align2);
 		builder.append(", littleEndian=");
 		builder.append(littleEndian);
-		builder.append(", platform=");
-		builder.append(platform);
-		builder.append(", encoding=");
-		builder.append(encoding);
-		builder.append(", datasetName=");
-		builder.append(datasetName);
-		builder.append(", fileType=");
-		builder.append(fileType);
+		
 		builder.append(", 64Bit=");
 		builder.append(get64Bit());
 		builder.append(", getHeader1Padding=");
 		builder.append(getHeader1Padding());
-		builder.append(", getHeader1Padding=");
+		builder.append(", getHeader2Padding=");
 		builder.append(getHeader2Padding());
 		builder.append("]");
 		return builder.toString();

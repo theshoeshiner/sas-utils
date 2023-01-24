@@ -23,6 +23,7 @@ public abstract class Variable {
 
 	public abstract String getName();
 	
+	public abstract String getLabel();
 	
 	public abstract VariableType getType();
 	

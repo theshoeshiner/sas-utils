@@ -71,12 +71,10 @@ public class FormatAndLabelSubHeader extends SubHeader {
 	
 	@StructToken(order=6)
 	@StructTokenSuffix({
-		@StructToken(type=TokenType.Bytes,constant = "000000000000")
+		@StructToken(type=TokenType.Bytes,constant = "000000000000",validate = false)
 	})
 	public Short labelLength;
 
-	DatasetBdat dataset;
-	
 
 	public Short getFormatIndex() {
 		return formatIndex;

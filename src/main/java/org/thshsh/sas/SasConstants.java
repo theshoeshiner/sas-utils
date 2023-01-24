@@ -2,7 +2,7 @@ package org.thshsh.sas;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.time.ZoneOffset;
+import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 
 import org.apache.commons.codec.binary.Hex;
@@ -16,7 +16,8 @@ public class SasConstants {
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(SasConstants.class);
 	
-	public static final ZonedDateTime EPOCH = ZonedDateTime.of(1960, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+	//public static final ZonedDateTime EPOCH = ZonedDateTime.of(1960, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+	public static final LocalDateTime EPOCH = LocalDateTime.of(1960, 1, 1, 0, 0, 0, 0);
 
 	public static void debugBytes(InputStream input, int num) throws IOException {
 		//long mark = input.getRandomAccessFile().getFilePointer();
@@ -40,6 +41,10 @@ public class SasConstants {
 		input.getRandomAccessFile().seek(mark);
 		
 		
+	}
+	
+	public static LocalDateTime toDateTime(Double d) {
+		return SasConstants.EPOCH.plusSeconds(((Double)d).longValue());
 	}
 	
 }

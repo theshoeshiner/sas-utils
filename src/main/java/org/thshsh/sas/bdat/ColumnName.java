@@ -16,7 +16,7 @@ public class ColumnName {
 	public Short start;
 	
 	@StructToken(order=2)
-	@StructTokenSuffix({@StructToken(type = TokenType.Bytes,constant = "0000")})
+	@StructTokenSuffix({@StructToken(type = TokenType.Bytes,constant = "0000",validate = false)})
 	public Short length;
 	
 	
@@ -57,7 +57,7 @@ public class ColumnName {
 		}*/
 	
 	public String getName() {
-		return dataset.getSubHeaderString(index, start, length).get();
+		return dataset.getSubHeaderString(index, start, length).orElse(null);
 	}
 
 	@Override
@@ -69,10 +69,8 @@ public class ColumnName {
 		builder.append(start);
 		builder.append(", length=");
 		builder.append(length);
-		builder.append(", dataset=");
-		builder.append(dataset);
-		builder.append(", getName()=");
-		builder.append(getName());
+		//builder.append(", getName()=");
+		//builder.append(getName());
 		builder.append("]");
 		return builder.toString();
 	}

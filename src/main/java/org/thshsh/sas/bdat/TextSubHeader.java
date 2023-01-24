@@ -4,9 +4,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.thshsh.struct.Struct;
 import org.thshsh.struct.StructToken;
-import org.thshsh.struct.StructTokenPrefix;
-import org.thshsh.struct.StructTokenSuffix;
-import org.thshsh.struct.TokenType;
 
 public class TextSubHeader extends SubHeader {
 	
@@ -14,11 +11,11 @@ public class TextSubHeader extends SubHeader {
 
 	public static final Struct<TextSubHeader> STRUCT = Struct.create(TextSubHeader.class);
 	
-	@StructToken(order = 0)
-	/*@StructTokenSuffix({
-		@StructToken(type = TokenType.Bytes,constant = "000000000000", validate = false)
-		})*/
-	public Short length; 
+		@StructToken(order = 0)
+		
+		public Short length; 
+	
+	//public abstract Long getLength();
 	
 	/*@StructTokenPrefix({
 		@StructToken(type = TokenType.Bytes,constant = "00000000", validate = false)
@@ -37,9 +34,24 @@ public class TextSubHeader extends SubHeader {
 	
 	public Integer getStringLength() {
 		//length - this length - header
+		//return getLength() - 12;
 		return length - 12;
 	}
 	
+	
+	
+	public Short getLength() {
+		return length;
+	}
+
+
+
+	public void setLength(Short length) {
+		this.length = length;
+	}
+
+
+
 	public TextSubHeader() {}
 
 	public TextSubHeader(String string) {
@@ -51,6 +63,7 @@ public class TextSubHeader extends SubHeader {
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
 		builder.append("TextSubHeader [length=");
+		//builder.append(getLength());
 		builder.append(length);
 		//builder.append(", string=");
 		//builder.append(string);
@@ -62,23 +75,16 @@ public class TextSubHeader extends SubHeader {
 		return string;
 	}
 	
-	public String getSubString(int start, int length) {
-		start = start - STRUCT.byteCount();
-		return string.substring(start, start+length);
-	}
+	//public abstract String getSubString(int start, int length);
 
-	public Short getLength() {
-		return length;
-	}
-
-	public void setLength(Short length) {
-		this.length = length;
-	}
-
+	
 	public void setString(String string) {
 		this.string = string;
 	}
 	
-	
+	public String getSubString(int start, int length) {
+		start = start - STRUCT.byteCount();
+		return string.substring(start, start+length);
+	}
 
 }

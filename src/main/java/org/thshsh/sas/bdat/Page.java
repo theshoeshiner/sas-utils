@@ -4,8 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
-import org.thshsh.sas.Dataset;
-
 public class Page {
 	
 	DatasetBdat dataset;
@@ -25,7 +23,7 @@ public class Page {
 		return header.getPageType();
 	}
 	
-	public int getBlockCount() {
+	public long getBlockCount() {
 		return header.blockCount;
 	}
 	
@@ -51,15 +49,15 @@ public class Page {
 	}
 
 	
-	public Integer getTotalObservationCount() {
+	public Long getTotalObservationCount() {
 		return getBlockObservationCount() + getHeaderObservationCount();
 	}
 	
-	public Integer getBlockObservationCount() {
+	public Long getBlockObservationCount() {
 		
-		if (getPageType().mixed()) return Math.min(dataset.rowSizeSubHeader.mixedPageRowCount, dataset.rowSizeSubHeader.getRowCount());
+		if (getPageType().mixed()) return Math.min(dataset.rowSizeSubHeader.getMixedPageRowCount(), dataset.rowSizeSubHeader.getRowCount());
 		else if (getPageType().data) return getBlockCount();
-		return 0;
+		return 0l;
 	}
 	
 	public Integer getHeaderObservationCount() {
@@ -74,8 +72,9 @@ public class Page {
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
-		builder.append("[getPageType()=");
-		builder.append(getPageType());
+		builder.append("[");
+		//builder.append("[getPageType()=");
+		//builder.append(getPageType());
 		builder.append(", getBlockCount()=");
 		builder.append(getBlockCount());
 		builder.append(", getSubHeaderCount()=");
