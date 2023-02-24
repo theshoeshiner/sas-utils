@@ -9,10 +9,25 @@
 		</encoder>
 	</appender>
 
+
+	<appender name="FILE" class="ch.qos.logback.core.FileAppender">
+		<filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+			<level>TRACE</level>
+		</filter>
+		<file>./target/log.log</file>
+		<append>false</append>
+		<immediateFlush>true</immediateFlush>
+
+		<encoder>
+			<pattern>%d{yyyy-MM-dd'T'HH:mm:ss.SSS,America/New_York} [%thread] %-5level %logger{48} - %msg%n</pattern>
+		</encoder>
+		
+	</appender>
 	
 
 	<root level="DEBUG">
 		<appender-ref ref="STDOUT" />
+		<appender-ref ref="FILE" />
 	</root>
 
 	<logger name="org.thshsh.struct" level="INFO"/>
