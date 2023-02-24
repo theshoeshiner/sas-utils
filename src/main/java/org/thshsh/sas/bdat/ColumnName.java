@@ -69,8 +69,8 @@ public class ColumnName {
 		builder.append(start);
 		builder.append(", length=");
 		builder.append(length);
-		//builder.append(", getName()=");
-		//builder.append(getName());
+		builder.append(", getName()=");
+		builder.append(dataset!=null?getName():null);
 		builder.append("]");
 		return builder.toString();
 	}
