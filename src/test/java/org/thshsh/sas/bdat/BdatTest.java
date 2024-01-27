@@ -3,6 +3,7 @@ package org.thshsh.sas.bdat;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -154,6 +155,25 @@ public class BdatTest extends TestUtils {
 	}
 	
 	@Test
+	public void testTimestamps() throws IOException, URISyntaxException {
+		List<File> files = findFiles("section5");
+		for(File file : files) {
+			try {
+				Library library = getLibrary(file);
+				LocalDateTime created = library.getCreated();
+				LocalDateTime modified = library.getModified();
+				LOGGER.info("file: {} created: {} modified: {}",file,created,modified);
+				/*library.getDatasets().forEach(d -> {
+					//d.getModified();
+				});*/
+			} catch (NotImplementedException e) {
+				LOGGER.warn("error on "+file,e);
+			}
+		}
+		//LOGGER.info("names: {}",datasetnames);
+	}
+	
+	@Test
 	public void testDatasetNames() throws IOException, URISyntaxException {
 		List<File> files = findFiles("");
 		List<String> datasetnames = new ArrayList<String>();
@@ -208,5 +228,6 @@ public class BdatTest extends TestUtils {
 		if(files.size() == 0) throw new IllegalArgumentException("File with prefix: "+prefix+" not found");
 		return files;
 	}
+	
 	
 }
