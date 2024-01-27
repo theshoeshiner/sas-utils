@@ -190,9 +190,9 @@ public class DatasetBdat extends Dataset {
 	
 	public Optional<String> getSubHeaderString(int index, int start, int length,boolean trim) {
 		if (length == 0) return Optional.empty();
-		LOGGER.debug("getSubHeaderString index: {} start: {} length: {}",index,start,length);
+		LOGGER.trace("getSubHeaderString index: {} start: {} length: {}",index,start,length);
 		return getStringSubHeaders().skip(index).map(h -> {
-			LOGGER.debug("string: {}",h.string);
+			LOGGER.trace("string: {}",h.string);
 			String s = h.getSubString(start, length);
 			return trim?s.trim():s;
 			}).findFirst();

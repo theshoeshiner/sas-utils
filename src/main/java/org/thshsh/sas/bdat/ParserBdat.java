@@ -113,15 +113,15 @@ public class ParserBdat implements Parser {
 			for (int p = 0; p < dataset.header3.getPageCount(); p++) {
 
 				long mark = raf.getFilePointer();
-				LOGGER.debug("page: {}", p);
+				LOGGER.trace("page: {}", p);
 
 				Page page = new Page(dataset);
 				page.startByte = raf.getFilePointer();
 				dataset.getPages().add(page);
-				LOGGER.debug("page start: {}", page.startByte);
-				LOGGER.debug("page end: {}", page.startByte+dataset.header3.pageSize);
+				LOGGER.trace("page start: {}", page.startByte);
+				LOGGER.trace("page end: {}", page.startByte+dataset.header3.pageSize);
 				
-				LOGGER.debug("potential sub headers: {}", dataset.header3.pageSize);
+				LOGGER.trace("potential sub headers: {}", dataset.header3.pageSize);
 
 				
 				
@@ -133,14 +133,14 @@ public class ParserBdat implements Parser {
 					PageHeader pageHeader = dataset.getStruct(PageHeader32.class, PageHeader64.class).unpackEntity(stream);
 					page.setHeader(pageHeader);
 
-					LOGGER.debug("PageHeader: {}", pageHeader);
-					LOGGER.debug("Page: {}", page);
+					LOGGER.trace("PageHeader: {}", pageHeader);
+					LOGGER.trace("Page: {}", page);
 
 					if (page.getPageType().meta) {
 												
 						if(page.getSubHeaderCount()>0) {
 						
-							LOGGER.debug("reading {} page sub header pointers",page.getSubHeaderCount());
+							LOGGER.trace("reading {} page sub header pointers",page.getSubHeaderCount());
 	
 							for (int i = 0; i < page.getSubHeaderCount(); i++) {
 							
@@ -162,9 +162,9 @@ public class ParserBdat implements Parser {
 						//}
 						
 
-						LOGGER.debug("current position: {}", raf.getFilePointer());
+						LOGGER.trace("current position: {}", raf.getFilePointer());
 						
-						LOGGER.debug("page.startByte: {}", page.startByte);
+						LOGGER.trace("page.startByte: {}", page.startByte);
 
 						
 
@@ -173,9 +173,9 @@ public class ParserBdat implements Parser {
 
 							long seekTo = page.startByte + pointer.getPageOffset().longValue();
 							
-							LOGGER.debug("Processing subheader POINTER: {}",pointer);
+							LOGGER.trace("Processing subheader POINTER: {}",pointer);
 						
-							LOGGER.debug("position: {} seekTo: {} length: {}",raf.getFilePointer(),seekTo,pointer.getLength()+seekTo);
+							LOGGER.trace("position: {} seekTo: {} length: {}",raf.getFilePointer(),seekTo,pointer.getLength()+seekTo);
 							
 							raf.seek(seekTo);
 							
@@ -200,11 +200,11 @@ public class ParserBdat implements Parser {
 							
 
 							if(pointer.getCompressionType() == CompressionType.Truncated) {
-								LOGGER.debug("Skipping Truncated SubHeader pointer: {}",pointer);
+								LOGGER.trace("Skipping Truncated SubHeader pointer: {}",pointer);
 							}
 							else {
 								
-								LOGGER.debug("Signature: {} = {}", signature,type);
+								LOGGER.trace("Signature: {} = {}", signature,type);
 	
 								if(type == null) throw new NotImplementedException("SubHeader with type "+signature+" is unknown");
 								
@@ -253,8 +253,8 @@ public class ParserBdat implements Parser {
 						}
 						//));
 
-						LOGGER.debug("done with sub header pointers");
-						LOGGER.debug("compression: {}",dataset.getCompression());
+						LOGGER.trace("done with sub header pointers");
+						LOGGER.trace("compression: {}",dataset.getCompression());
 						
 					}
 
@@ -274,7 +274,7 @@ public class ParserBdat implements Parser {
 					}*/
 
 					long endOfPage = mark + dataset.header3.pageSize;
-					LOGGER.debug("moving file pointer from {} to {}", raf.getFilePointer(), endOfPage);
+					LOGGER.trace("moving file pointer from {} to {}", raf.getFilePointer(), endOfPage);
 					raf.seek(endOfPage);
 					//LOGGER.debug("pointer1: {}",raf.getFilePointer());
 					//stream.reset();
@@ -451,7 +451,7 @@ public class ParserBdat implements Parser {
 		{
 
 			subHeaderPointer = dataset.getSubHeaderPointerStruct().unpackEntity(stream);
-			LOGGER.debug("subHeaderPointer: {}", subHeaderPointer);
+			LOGGER.trace("subHeaderPointer: {}", subHeaderPointer);
 
 			return subHeaderPointer;
 
